@@ -89,20 +89,41 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       margin-bottom: 18px;
+      cursor: default;
     }
 
-    .live-dot::before {
-      content: '';
+    .live-dot-pulse {
       width: 7px;
       height: 7px;
       border-radius: 50%;
       background: var(--green);
+      position: relative;
+      flex-shrink: 0;
       animation: blink 2s ease-in-out infinite;
+    }
+
+    .live-dot-pulse::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: var(--green);
+      opacity: 0.3;
+      animation: ripple 2s ease-out infinite;
+    }
+
+    @keyframes ripple {
+      0% { transform: scale(1); opacity: 0.3; }
+      100% { transform: scale(2.5); opacity: 0; }
     }
 
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.3; }
+    }
+
+    #player-count {
+      transition: opacity 0.3s;
     }
 
     .hero h1 {
@@ -166,11 +187,46 @@
       pointer-events: none;
     }
 
+    /* TAG FILTERS */
+    .tag-wrap {
+      padding: 14px 40px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 680px;
+    }
+
+    .tag-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .tag-btn:hover {
+      border-color: rgba(61,220,132,0.4);
+      color: var(--text);
+    }
+
+    .tag-btn.active {
+      background: var(--green);
+      border-color: var(--green);
+      color: #000;
+    }
+
     .section-bar {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 48px 40px 20px;
+      padding: 40px 40px 20px;
     }
 
     .section-bar h2 {
@@ -241,7 +297,25 @@
       font-size: 0.8rem;
       color: var(--muted);
       line-height: 1.5;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+
+    .card-tag {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--green);
+      background: var(--green-glow);
+      border: 1px solid rgba(61,220,132,0.2);
+      padding: 2px 9px;
+      border-radius: 20px;
+      text-transform: lowercase;
     }
 
     .play-btn {
@@ -292,8 +366,138 @@
 
     .footer-logo span { color: var(--green); }
 
+    /* CALCULATOR OVERLAY */
+    .calc-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .calc-overlay.open {
+      display: flex;
+    }
+
+    .calc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      width: 300px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.8);
+    }
+
+    .calc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .calc-header span {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .calc-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0 4px;
+      transition: color 0.2s;
+    }
+
+    .calc-close:hover { color: var(--text); }
+
+    .calc-display {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: right;
+      margin-bottom: 12px;
+    }
+
+    .calc-expr {
+      font-size: 0.75rem;
+      color: var(--muted);
+      min-height: 16px;
+      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .calc-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .calc-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 14px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .calc-btn:hover {
+      background: #222;
+      border-color: #333;
+    }
+
+    .calc-btn:active { transform: scale(0.95); }
+
+    .calc-btn.op {
+      color: var(--green);
+      border-color: rgba(61,220,132,0.2);
+    }
+
+    .calc-btn.eq {
+      background: var(--green);
+      border-color: var(--green);
+      color: #000;
+    }
+
+    .calc-btn.eq:hover { background: var(--green-dim); }
+
+    .calc-btn.wide { grid-column: span 2; }
+
+    .calc-hint {
+      text-align: center;
+      font-size: 0.68rem;
+      color: #333;
+      margin-top: 14px;
+    }
+
     @media (max-width: 600px) {
-      header, .hero, .search-wrap, .section-bar, .game-grid, footer {
+      header, .hero, .search-wrap, .tag-wrap, .section-bar, .game-grid, footer {
         padding-left: 20px;
         padding-right: 20px;
       }
@@ -308,7 +512,10 @@
   </header>
 
   <section class="hero">
-    <div class="live-dot">Playing now</div>
+    <div class="live-dot">
+      <div class="live-dot-pulse"></div>
+      <span id="player-count">— people playing</span>
+    </div>
     <h1>Games for when<br>you're <em>bored.</em></h1>
     <p>A curated collection of unblocked games — play anything, anytime, no hassle.</p>
   </section>
@@ -318,6 +525,10 @@
       <span class="search-icon">🔍</span>
       <input type="text" id="search-input" placeholder="Search games…" oninput="filterGames()">
     </div>
+  </div>
+
+  <div class="tag-wrap" id="tag-wrap">
+    <!-- tags injected by JS -->
   </div>
 
   <div class="section-bar">
@@ -337,13 +548,116 @@
     <div>© 2025 WhimsGames</div>
   </footer>
 
+  <!-- CALCULATOR OVERLAY -->
+  <div class="calc-overlay" id="calcOverlay">
+    <div class="calc">
+      <div class="calc-header">
+        <span>Calculator</span>
+        <button class="calc-close" id="calcClose">✕</button>
+      </div>
+      <div class="calc-display">
+        <div class="calc-expr" id="calcExpr"></div>
+        <div class="calc-val" id="calcVal">0</div>
+      </div>
+      <div class="calc-grid">
+        <button class="calc-btn op" onclick="calcInput('AC')">AC</button>
+        <button class="calc-btn op" onclick="calcInput('+/-')">+/-</button>
+        <button class="calc-btn op" onclick="calcInput('%')">%</button>
+        <button class="calc-btn op" onclick="calcInput('/')">÷</button>
+
+        <button class="calc-btn" onclick="calcInput('7')">7</button>
+        <button class="calc-btn" onclick="calcInput('8')">8</button>
+        <button class="calc-btn" onclick="calcInput('9')">9</button>
+        <button class="calc-btn op" onclick="calcInput('*')">×</button>
+
+        <button class="calc-btn" onclick="calcInput('4')">4</button>
+        <button class="calc-btn" onclick="calcInput('5')">5</button>
+        <button class="calc-btn" onclick="calcInput('6')">6</button>
+        <button class="calc-btn op" onclick="calcInput('-')">−</button>
+
+        <button class="calc-btn" onclick="calcInput('1')">1</button>
+        <button class="calc-btn" onclick="calcInput('2')">2</button>
+        <button class="calc-btn" onclick="calcInput('3')">3</button>
+        <button class="calc-btn op" onclick="calcInput('+')">+</button>
+
+        <button class="calc-btn wide" onclick="calcInput('0')">0</button>
+        <button class="calc-btn" onclick="calcInput('.')">.</button>
+        <button class="calc-btn eq" onclick="calcInput('=')">=</button>
+      </div>
+      <div class="calc-hint">Press <strong>Ctrl + K</strong> to open / close</div>
+    </div>
+  </div>
+
   <script src="games.js"></script>
   <script>
+    // ── LIVE PLAYER COUNT ──
+    // Uses localStorage to simulate cross-tab player tracking
+    const SESSION_KEY = 'wg_session_' + Math.random().toString(36).slice(2);
+    const PLAYERS_KEY = 'wg_players';
+    const HEARTBEAT_MS = 4000;
+    const EXPIRE_MS = 12000;
+
+    function getSessions() {
+      try { return JSON.parse(localStorage.getItem(PLAYERS_KEY) || '{}'); } catch { return {}; }
+    }
+
+    function updateMySession() {
+      const sessions = getSessions();
+      sessions[SESSION_KEY] = Date.now();
+      localStorage.setItem(PLAYERS_KEY, JSON.stringify(sessions));
+    }
+
+    function countActivePlayers() {
+      const sessions = getSessions();
+      const now = Date.now();
+      const active = {};
+      for (const [k, t] of Object.entries(sessions)) {
+        if (now - t < EXPIRE_MS) active[k] = t;
+      }
+      localStorage.setItem(PLAYERS_KEY, JSON.stringify(active));
+      return Object.keys(active).length;
+    }
+
+    function updatePlayerDisplay() {
+      updateMySession();
+      const count = countActivePlayers();
+      const el = document.getElementById('player-count');
+      el.textContent = `${count} ${count === 1 ? 'person' : 'people'} playing`;
+    }
+
+    // Register this tab and clean up on close
+    updatePlayerDisplay();
+    setInterval(updatePlayerDisplay, HEARTBEAT_MS);
+
+    window.addEventListener('beforeunload', () => {
+      const sessions = getSessions();
+      delete sessions[SESSION_KEY];
+      localStorage.setItem(PLAYERS_KEY, JSON.stringify(sessions));
+    });
+
+    // ── TAGS & SEARCH ──
     let allCards = [];
+    let activeTag = null;
 
     window.onload = function () {
       const container = document.getElementById("game-list");
       const countEl = document.getElementById("game-count");
+
+      // Collect all unique tags
+      const allTags = new Set();
+      gamesList.forEach(g => g.tags && g.tags.forEach(t => allTags.add(t)));
+
+      // Render tag buttons
+      const tagWrap = document.getElementById("tag-wrap");
+      allTags.forEach(tag => {
+        const btn = document.createElement("button");
+        btn.className = "tag-btn";
+        btn.textContent = tag;
+        btn.dataset.tag = tag;
+        btn.addEventListener("click", () => toggleTag(tag, btn));
+        tagWrap.appendChild(btn);
+      });
+
       countEl.textContent = `${gamesList.length} games`;
 
       gamesList.forEach(game => {
@@ -352,12 +666,16 @@
         a.href = game.link;
         if (game.external) a.target = "_blank";
         a.dataset.title = game.title.toLowerCase();
+        a.dataset.tags = (game.tags || []).join(',');
+
+        const tagsHtml = (game.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
 
         a.innerHTML = `
           <img class="card-thumb" src="${game.img}" alt="${game.title}" onerror="this.style.background='#1a1a1a'">
           <div class="card-body">
             <div class="card-title">${game.title}</div>
             <div class="card-desc">${game.desc}</div>
+            <div class="card-tags">${tagsHtml}</div>
             <span class="play-btn">▶ Play Now</span>
           </div>
         `;
@@ -367,17 +685,122 @@
       });
     };
 
+    function toggleTag(tag, btn) {
+      if (activeTag === tag) {
+        activeTag = null;
+        document.querySelectorAll(".tag-btn").forEach(b => b.classList.remove("active"));
+      } else {
+        activeTag = tag;
+        document.querySelectorAll(".tag-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      }
+      filterGames();
+    }
+
     function filterGames() {
-      const query = document.getElementById("search-input").value.toLowerCase();
+      const query = document.getElementById("search-input").value.toLowerCase().trim();
       let visible = 0;
       allCards.forEach(card => {
-        const match = card.dataset.title.includes(query);
-        card.style.display = match ? "block" : "none";
-        if (match) visible++;
+        const titleMatch = card.dataset.title.includes(query);
+        const tagMatch = !activeTag || card.dataset.tags.split(',').includes(activeTag);
+        const show = titleMatch && tagMatch;
+        card.style.display = show ? "block" : "none";
+        if (show) visible++;
       });
       document.getElementById("game-count").textContent = `${visible} games`;
       document.getElementById("no-results").style.display = visible === 0 ? "block" : "none";
     }
+
+    // ── CALCULATOR ──
+    let calcExpression = '';
+    let calcDisplay = '0';
+    let justEvaluated = false;
+
+    function calcInput(val) {
+      const exprEl = document.getElementById('calcExpr');
+      const valEl = document.getElementById('calcVal');
+
+      if (val === 'AC') {
+        calcExpression = '';
+        calcDisplay = '0';
+        justEvaluated = false;
+      } else if (val === '+/-') {
+        if (calcDisplay !== '0') {
+          calcDisplay = (parseFloat(calcDisplay) * -1).toString();
+        }
+      } else if (val === '%') {
+        calcDisplay = (parseFloat(calcDisplay) / 100).toString();
+      } else if (val === '=') {
+        try {
+          const full = calcExpression + calcDisplay;
+          exprEl.textContent = full + ' =';
+          const result = Function('"use strict"; return (' + full + ')')();
+          calcDisplay = parseFloat(result.toFixed(10)).toString();
+          calcExpression = '';
+          justEvaluated = true;
+        } catch {
+          calcDisplay = 'Error';
+          calcExpression = '';
+        }
+      } else if (['+', '-', '*', '/'].includes(val)) {
+        if (justEvaluated) {
+          calcExpression = calcDisplay + val;
+          calcDisplay = '0';
+          justEvaluated = false;
+        } else {
+          calcExpression += calcDisplay + val;
+          calcDisplay = '0';
+        }
+      } else {
+        if (justEvaluated) { calcDisplay = '0'; justEvaluated = false; }
+        if (val === '.' && calcDisplay.includes('.')) return;
+        calcDisplay = calcDisplay === '0' && val !== '.' ? val : calcDisplay + val;
+      }
+
+      if (val !== '=') {
+        const opMap = { '*': '×', '/': '÷', '+': '+', '-': '−' };
+        exprEl.textContent = calcExpression.replace(/[*/+-]/g, m => opMap[m] || m);
+      }
+      valEl.textContent = calcDisplay;
+    }
+
+    // Keyboard support for calculator
+    document.addEventListener('keydown', e => {
+      // Ctrl+K opens/closes calculator
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        toggleCalc();
+        return;
+      }
+      if (!document.getElementById('calcOverlay').classList.contains('open')) return;
+      if (e.key === 'Escape') { closeCalc(); return; }
+      if (e.key >= '0' && e.key <= '9') calcInput(e.key);
+      else if (e.key === '.') calcInput('.');
+      else if (e.key === '+') calcInput('+');
+      else if (e.key === '-') calcInput('-');
+      else if (e.key === '*') calcInput('*');
+      else if (e.key === '/') { e.preventDefault(); calcInput('/'); }
+      else if (e.key === 'Enter' || e.key === '=') calcInput('=');
+      else if (e.key === 'Backspace') {
+        if (calcDisplay.length > 1) calcDisplay = calcDisplay.slice(0, -1);
+        else calcDisplay = '0';
+        document.getElementById('calcVal').textContent = calcDisplay;
+      }
+      else if (e.key === 'Escape') closeCalc();
+    });
+
+    function toggleCalc() {
+      document.getElementById('calcOverlay').classList.toggle('open');
+    }
+
+    function closeCalc() {
+      document.getElementById('calcOverlay').classList.remove('open');
+    }
+
+    document.getElementById('calcClose').addEventListener('click', closeCalc);
+    document.getElementById('calcOverlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('calcOverlay')) closeCalc();
+    });
   </script>
 
 </body>
