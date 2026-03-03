@@ -552,15 +552,7 @@
   <script src="games.js"></script>
   <script>
     // ── LIVE PLAYER COUNT ──
-    trackPage('home');
-    checkFunnyMode();
-    function updatePlayerDisplay() {
-      const count = getTotalCount();
-      const el = document.getElementById('player-count');
-      if (el) el.textContent = `${count} ${count === 1 ? 'person' : 'people'} playing`;
-    }
-    updatePlayerDisplay();
-    setInterval(updatePlayerDisplay, 4000);
+    startTotalCounter('player-count');
 
     // ── TAGS & SEARCH ──
     let allCards = [];

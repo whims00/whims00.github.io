@@ -1,53 +1,99 @@
-// ── WHIMS GAMES SHARED TRACKER ──
-const _WG_SID = localStorage.getItem('wg_sid') || (() => {
+// ── WHIMS GAMES TRACKER — Supabase edition ──
+const _SUPA_URL = 'https://rjrnqiklifurcqzvavtt.supabase.co';
+const _SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcm5xaWtsaWZ1cmNxenZhdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0OTQ5OTEsImV4cCI6MjA4ODA3MDk5MX0.4DXwtSUQ7yA2aH-N2bEnobSi2gRbFw0BANdfgSfROx0';
+
+// Unique per tab (sessionStorage resets when tab closes)
+const _TAB_ID = sessionStorage.getItem('wg_tab') || (() => {
   const id = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-  localStorage.setItem('wg_sid', id); return id;
+  sessionStorage.setItem('wg_tab', id); return id;
 })();
-const SESSION_KEY = 'wg_sess_' + _WG_SID;
-const HEARTBEAT_MS = 3000;
-const EXPIRE_MS = 10000;
+
+const HEARTBEAT_MS = 5000;
 let _currentPage = 'home';
+
+async function _supaFetch(method, body) {
+  try {
+    await fetch(`${_SUPA_URL}/rest/v1/players`, {
+      method,
+      headers: {
+        'apikey': _SUPA_KEY,
+        'Authorization': `Bearer ${_SUPA_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': method === 'POST' ? 'resolution=merge-duplicates' : ''
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+  } catch {}
+}
+
+async function _heartbeat() {
+  await _supaFetch('POST', {
+    session_id: _TAB_ID,
+    page: _currentPage,
+    updated_at: new Date().toISOString()
+  });
+}
+
+async function _removeSession() {
+  try {
+    await fetch(`${_SUPA_URL}/rest/v1/players?session_id=eq.${_TAB_ID}`, {
+      method: 'DELETE',
+      headers: { 'apikey': _SUPA_KEY, 'Authorization': `Bearer ${_SUPA_KEY}` }
+    });
+  } catch {}
+}
+
+async function _fetchPlayers() {
+  try {
+    const res = await fetch(`${_SUPA_URL}/rest/v1/players?select=page`, {
+      headers: { 'apikey': _SUPA_KEY, 'Authorization': `Bearer ${_SUPA_KEY}` }
+    });
+    return await res.json();
+  } catch { return []; }
+}
 
 function trackPage(page) {
   _currentPage = page;
   _heartbeat();
   setInterval(_heartbeat, HEARTBEAT_MS);
   window.addEventListener('beforeunload', _removeSession);
-  // Re-heartbeat when iframe loses focus back to us
   window.addEventListener('focus', _heartbeat);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) _heartbeat(); });
 }
 
-function _heartbeat() {
-  try {
-    const all = JSON.parse(localStorage.getItem('wg_players') || '{}');
-    const now = Date.now();
-    all[SESSION_KEY] = { t: now, page: _currentPage };
-    for (const k of Object.keys(all)) { if (now - all[k].t > EXPIRE_MS) delete all[k]; }
-    localStorage.setItem('wg_players', JSON.stringify(all));
-  } catch {}
+async function getTotalCount() {
+  const rows = await _fetchPlayers();
+  return rows.length;
 }
 
-function _removeSession() {
-  try {
-    const all = JSON.parse(localStorage.getItem('wg_players') || '{}');
-    delete all[SESSION_KEY];
-    localStorage.setItem('wg_players', JSON.stringify(all));
-  } catch {}
+async function getPageCount(page) {
+  const rows = await _fetchPlayers();
+  return rows.filter(r => r.page === page).length;
 }
 
-function getActivePlayers() {
-  try {
-    const all = JSON.parse(localStorage.getItem('wg_players') || '{}');
-    const now = Date.now();
-    const active = {};
-    for (const [k, v] of Object.entries(all)) { if (now - v.t < EXPIRE_MS) active[k] = v; }
-    return active;
-  } catch { return {}; }
+// ── LIVE COUNT HELPERS ──
+// Call these to auto-update an element with total or page count
+function startTotalCounter(elementId) {
+  async function update() {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const count = await getTotalCount();
+    el.textContent = `${count} ${count === 1 ? 'person' : 'people'} playing`;
+  }
+  update();
+  setInterval(update, HEARTBEAT_MS);
 }
 
-function getTotalCount() { return Object.keys(getActivePlayers()).length; }
-function getPageCount(page) { return Object.values(getActivePlayers()).filter(v => v.page === page).length; }
+function startPageCounter(page, elementId) {
+  async function update() {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const c = await getPageCount(page);
+    el.textContent = c > 0 ? `· ${c} playing` : '';
+  }
+  update();
+  setInterval(update, HEARTBEAT_MS);
+}
 
 // ── KEYBIND HELPER ──
 function getKB(key) {
@@ -62,9 +108,6 @@ function kbLabel(kb) {
   return p.join('+');
 }
 
-// ── GLOBAL KEYBIND LISTENER (works even when iframe is focused via blur/focus polling) ──
-// We use a BroadcastChannel trick + repeated interval to detect keypresses
-// The real fix: listen on the window AND use a visibility/focus trick
 function initGlobalKeybinds(onTools, onGames) {
   function checkKeys(e) {
     const toTools = getKB('toTools') || { key: 'k', ctrl: true, meta: false, shift: false };
@@ -75,27 +118,22 @@ function initGlobalKeybinds(onTools, onGames) {
     else if (onGames && match(toGames)) { e.preventDefault(); onGames(); }
   }
   window.addEventListener('keydown', checkKeys);
-
-  // Iframe focus workaround: blur the iframe when keybind is pressed
-  // We check every 200ms if an iframe has focus and set up a listener on it
+  // Inject into iframes too
   setInterval(() => {
-    try {
-      const frames = document.querySelectorAll('iframe');
-      frames.forEach(fr => {
-        try {
-          if (fr._wgKbBound) return;
-          fr._wgKbBound = true;
-          fr.contentWindow.addEventListener('keydown', checkKeys);
-        } catch {}
-      });
-    } catch {}
+    document.querySelectorAll('iframe').forEach(fr => {
+      try {
+        if (fr._wgKbBound) return;
+        fr._wgKbBound = true;
+        fr.contentWindow.addEventListener('keydown', checkKeys);
+      } catch {}
+    });
   }, 500);
 }
 
-// ── FUNNY MODE ──
+// ── FUNNY MODE (1/10 chance) ──
 function checkFunnyMode() {
   if (localStorage.getItem('wg_funny') !== 'true') return;
-  if (Math.random() < 0.1) { // 1/10
+  if (Math.random() < 0.1) {
     const div = document.createElement('div');
     div.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999999;opacity:0;transition:opacity 0.04s;pointer-events:all;';
     document.body.appendChild(div);
@@ -110,21 +148,12 @@ function checkFunnyMode() {
   }
 }
 
-// ── SETTINGS BUTTON INJECTOR ──
-// Call this to auto-inject a floating settings button on any page
+// ── FLOATING SETTINGS BUTTON ──
 function injectSettingsBtn() {
   const btn = document.createElement('a');
   btn.href = 'settings.html';
   btn.title = 'Settings';
-  btn.style.cssText = `
-    position: fixed; bottom: 20px; right: 20px; z-index: 9000;
-    width: 40px; height: 40px; border-radius: 10px;
-    background: #111; border: 1px solid #222;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1rem; text-decoration: none;
-    transition: border-color 0.2s, transform 0.2s;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  `;
+  btn.style.cssText = `position:fixed;bottom:20px;right:20px;z-index:9000;width:40px;height:40px;border-radius:10px;background:#111;border:1px solid #222;display:flex;align-items:center;justify-content:center;font-size:1rem;text-decoration:none;transition:border-color 0.2s,transform 0.2s;box-shadow:0 4px 20px rgba(0,0,0,0.5);`;
   btn.textContent = '⚙';
   btn.addEventListener('mouseenter', () => { btn.style.borderColor = 'rgba(61,220,132,0.5)'; btn.style.transform = 'scale(1.1)'; });
   btn.addEventListener('mouseleave', () => { btn.style.borderColor = '#222'; btn.style.transform = 'scale(1)'; });
