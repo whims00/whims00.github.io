@@ -548,52 +548,19 @@
     <div>© 2025 WhimsGames</div>
   </footer>
 
+  <script src="tracking.js"></script>
   <script src="games.js"></script>
   <script>
     // ── LIVE PLAYER COUNT ──
-    // Uses localStorage to simulate cross-tab player tracking
-    const SESSION_KEY = 'wg_session_' + Math.random().toString(36).slice(2);
-    const PLAYERS_KEY = 'wg_players';
-    const HEARTBEAT_MS = 4000;
-    const EXPIRE_MS = 12000;
-
-    function getSessions() {
-      try { return JSON.parse(localStorage.getItem(PLAYERS_KEY) || '{}'); } catch { return {}; }
-    }
-
-    function updateMySession() {
-      const sessions = getSessions();
-      sessions[SESSION_KEY] = Date.now();
-      localStorage.setItem(PLAYERS_KEY, JSON.stringify(sessions));
-    }
-
-    function countActivePlayers() {
-      const sessions = getSessions();
-      const now = Date.now();
-      const active = {};
-      for (const [k, t] of Object.entries(sessions)) {
-        if (now - t < EXPIRE_MS) active[k] = t;
-      }
-      localStorage.setItem(PLAYERS_KEY, JSON.stringify(active));
-      return Object.keys(active).length;
-    }
-
+    trackPage('home');
+    checkFunnyMode();
     function updatePlayerDisplay() {
-      updateMySession();
-      const count = countActivePlayers();
+      const count = getTotalCount();
       const el = document.getElementById('player-count');
-      el.textContent = `${count} ${count === 1 ? 'person' : 'people'} playing`;
+      if (el) el.textContent = `${count} ${count === 1 ? 'person' : 'people'} playing`;
     }
-
-    // Register this tab and clean up on close
     updatePlayerDisplay();
-    setInterval(updatePlayerDisplay, HEARTBEAT_MS);
-
-    window.addEventListener('beforeunload', () => {
-      const sessions = getSessions();
-      delete sessions[SESSION_KEY];
-      localStorage.setItem(PLAYERS_KEY, JSON.stringify(sessions));
-    });
+    setInterval(updatePlayerDisplay, 4000);
 
     // ── TAGS & SEARCH ──
     let allCards = [];
@@ -671,19 +638,13 @@
       document.getElementById("no-results").style.display = visible === 0 ? "block" : "none";
     }
 
-    // ── KEYBIND (to tools) ──
-    function getKeybind(key) {
-      try { return JSON.parse(localStorage.getItem('wg_kb_' + key)); } catch { return null; }
-    }
-    document.addEventListener('keydown', e => {
-      const kb = getKeybind('toTools') || { key: 'k', ctrl: true, meta: false, shift: false };
-      const match = e.key.toLowerCase() === kb.key.toLowerCase()
-        && !!e.ctrlKey === !!kb.ctrl
-        && !!e.metaKey === !!kb.meta
-        && !!e.shiftKey === !!kb.shift;
-      if (match) { e.preventDefault(); window.location.href = 'tools.html'; }
-    });
 
+    // ── KEYBINDS & SETTINGS ──
+    injectSettingsBtn();
+    initGlobalKeybinds(
+      () => { window.location.href = 'tools.html'; },
+      null
+    );
   </script>
 
 </body>

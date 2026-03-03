@@ -38,13 +38,5 @@ const gamesList = [
     desc: "Classic football meets arcade gameplay. Build your dynasty.",
     tags: ["sports", "retro", "football"],
     external: false
-  },
-  {
-    title: "Tunnel Rush",
-    img: "images/TunnelRush.png",
-    link: "https://tunnelrush.online/",
-    desc: "Speed through neon tunnels and dodge incoming walls.",
-    tags: ["action", "skill", "arcade"],
-    external: true
   }
 ];

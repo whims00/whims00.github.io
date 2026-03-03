@@ -143,6 +143,12 @@
     .card-info { padding: 10px 12px 12px; }
     .card-info h3 { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
     .card-info p { font-size: 0.75rem; color: var(--muted); line-height: 1.4; }
+      .game-players {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-weight: 600;
+      margin-left: 4px;
+    }
   </style>
 </head>
 <body>
@@ -153,7 +159,7 @@
     </div>
     <div class="game-bar">
       <div class="game-bar-left">
-        <div class="game-dot"></div>
+        <div class="game-dot"></div><span class="game-players" id="game-player-count"></span>
         <span class="game-title">Drive Mad</span>
       </div>
       <button id="fullscreen-btn" class="fullscreen-btn">⛶ Fullscreen</button>
@@ -164,10 +170,20 @@
     <div class="sidebar-label">More Games</div>
     <div id="random-games"></div>
   </div>
+  <script src="tracking.js"></script>
   <script src="games.js"></script>
   
   <script>
     window.addEventListener("DOMContentLoaded", () => {
+      trackPage('DriveMad');
+      checkFunnyMode();
+      function updateGameCount() {
+        const c = getPageCount('DriveMad');
+        const el = document.getElementById('game-player-count');
+        if (el) el.textContent = c > 0 ? `· ${c} playing` : '';
+      }
+      updateGameCount();
+      setInterval(updateGameCount, 4000);
       const container = document.getElementById("random-games");
       const filtered = gamesList.filter(g => g.title !== "Drive Mad");
       const shuffled = filtered.sort(() => 0.5 - Math.random());
@@ -210,6 +226,14 @@
     document.addEventListener('keydown', e => {
       if (e.ctrlKey && e.key === 'k') { e.preventDefault(); window.location.href = 'tools.html'; }
     });
+
+    // ── KEYBINDS & SETTINGS BTN ──
+    injectSettingsBtn();
+    initGlobalKeybinds(
+      () => { window.location.href = 'tools.html'; },
+      null
+    );
+
   </script>
 </body>
 </html>

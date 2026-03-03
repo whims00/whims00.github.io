@@ -124,7 +124,24 @@
     @media (max-width: 600px) {
       header, .page-hero, .settings-content { padding-left: 18px; padding-right: 18px; }
     }
+  
+    .toggle-wrap {
+      position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;
+    }
+    .toggle-wrap input { display: none; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 12px; transition: 0.2s;
+    }
+    .toggle-slider::after {
+      content: ''; position: absolute; width: 16px; height: 16px;
+      background: var(--muted); border-radius: 50%;
+      top: 3px; left: 3px; transition: 0.2s;
+    }
+    .toggle-wrap input:checked + .toggle-slider { background: var(--green-glow); border-color: var(--green); }
+    .toggle-wrap input:checked + .toggle-slider::after { background: var(--green); transform: translateX(20px); }
   </style>
+  <script src="tracking.js"></script>
 </head>
 <body>
 
@@ -183,6 +200,24 @@
     </div>
 
     <div class="settings-section">
+      <div class="section-label">Fun Stuff</div>
+      <div class="kb-card">
+        <div class="kb-card-header">
+          <div class="kb-card-info">
+            <h3>Funny Mode 🎉</h3>
+            <p>Every time you open a new page there's a 1-in-10 chance it flashbangs you. Off by default.</p>
+          </div>
+          <div style="flex-shrink:0">
+            <label class="toggle-wrap">
+              <input type="checkbox" id="funnyToggle" onchange="saveFunny(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <div class="section-label">Tips</div>
       <div class="tips-card">
         <h3>How it works</h3>
@@ -208,6 +243,14 @@
   </div>
 
   <script>
+    // Funny mode
+    checkFunnyMode();
+    injectSettingsBtn();
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('funnyToggle').checked = localStorage.getItem('wg_funny') === 'true';
+    });
+    function saveFunny(val) { localStorage.setItem('wg_funny', val ? 'true' : 'false'); }
+
     const DEFAULTS = {
       toTools: { key: 'k', ctrl: true, meta: false, shift: false },
       toGames: { key: 'k', ctrl: true, meta: false, shift: false },
