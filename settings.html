@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — Educational Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #080808;
+      --surface: #111111;
+      --surface2: #181818;
+      --border: #222222;
+      --green: #3ddc84;
+      --green-dim: #2ab86a;
+      --green-glow: rgba(61, 220, 132, 0.12);
+      --text: #f0f0f0;
+      --muted: #666;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--black); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    header {
+      padding: 0 40px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: rgba(8,8,8,0.97); backdrop-filter: blur(12px); z-index: 50;
+    }
+    .header-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; }
+    .header-title span { color: var(--green); }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); font-size: 0.78rem; font-weight: 600;
+      padding: 6px 14px; border-radius: 9px; cursor: pointer;
+      text-decoration: none; transition: all 0.15s;
+    }
+    .back-btn:hover { border-color: rgba(61,220,132,0.35); color: var(--text); }
+
+    .page-hero { padding: 40px 40px 30px; border-bottom: 1px solid var(--border); }
+    .page-hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; letter-spacing: -1px; }
+    .page-hero h1 span { color: var(--green); }
+    .page-hero p { margin-top: 6px; color: var(--muted); font-size: 0.88rem; }
+
+    .settings-content { max-width: 560px; padding: 36px 40px 80px; }
+
+    .settings-section { margin-bottom: 36px; }
+    .section-label {
+      font-family: 'Syne', sans-serif; font-size: 0.72rem; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 14px;
+    }
+
+    .kb-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; margin-bottom: 10px;
+    }
+    .kb-card-header {
+      padding: 14px 18px 10px;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    .kb-card-info h3 { font-family: 'Syne', sans-serif; font-size: 0.88rem; font-weight: 700; margin-bottom: 3px; }
+    .kb-card-info p { font-size: 0.76rem; color: var(--muted); line-height: 1.4; }
+
+    .kb-current {
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    }
+    .kb-keys {
+      display: flex; gap: 4px;
+    }
+    .kb-key {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem; font-weight: 700;
+      padding: 4px 9px; border-radius: 6px;
+    }
+    .kb-key.green { background: var(--green-glow); border-color: rgba(61,220,132,0.3); color: var(--green); }
+
+    .kb-record-area { padding: 0 18px 14px; }
+    .kb-record-btn {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem; font-weight: 600;
+      padding: 11px; border-radius: 9px; cursor: pointer;
+      transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .kb-record-btn:hover { border-color: rgba(61,220,132,0.4); color: var(--text); }
+    .kb-record-btn.recording {
+      background: rgba(61,220,132,0.08);
+      border-color: var(--green);
+      color: var(--green);
+      animation: pulse-border 1s ease-in-out infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { border-color: var(--green); }
+      50% { border-color: rgba(61,220,132,0.3); }
+    }
+    .kb-status {
+      font-size: 0.73rem; color: var(--muted); text-align: center; margin-top: 7px; min-height: 16px;
+    }
+    .kb-status.ok { color: var(--green); }
+    .kb-status.conflict { color: #ff6b6b; }
+
+    .reset-all {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem; font-weight: 600;
+      padding: 9px 20px; border-radius: 9px; cursor: pointer;
+      transition: all 0.15s; width: 100%;
+    }
+    .reset-all:hover { border-color: #ff6b6b44; color: #ff6b6b; }
+
+    .tips-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px;
+    }
+    .tips-card h3 { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; margin-bottom: 12px; color: var(--green); }
+    .tip { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; font-size: 0.8rem; }
+    .tip-icon { flex-shrink: 0; font-size: 0.9rem; margin-top: 1px; }
+    .tip-text { color: var(--muted); line-height: 1.5; }
+    .tip-text strong { color: var(--text); }
+
+    @media (max-width: 600px) {
+      header, .page-hero, .settings-content { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-title">Educational <span>Tools</span> — Settings</div>
+    <a href="tools.html" class="back-btn">← Tools</a>
+  </header>
+
+  <div class="page-hero">
+    <h1>Key<span>binds</span></h1>
+    <p>Set custom shortcuts. Works with Ctrl, Cmd (⌘), Shift, or any combo.</p>
+  </div>
+
+  <div class="settings-content">
+
+    <div class="settings-section">
+      <div class="section-label">Shortcuts</div>
+
+      <!-- TO TOOLS -->
+      <div class="kb-card" id="card-toTools">
+        <div class="kb-card-header">
+          <div class="kb-card-info">
+            <h3>Open Educational Tools</h3>
+            <p>Press this from any game page or the home page to jump here.</p>
+          </div>
+          <div class="kb-current" id="display-toTools"></div>
+        </div>
+        <div class="kb-record-area">
+          <button class="kb-record-btn" id="btn-toTools" onclick="startRecord('toTools')">
+            <span id="btnLabel-toTools">🎯 Click to record shortcut</span>
+          </button>
+          <div class="kb-status" id="status-toTools"></div>
+        </div>
+      </div>
+
+      <!-- BACK TO GAMES -->
+      <div class="kb-card" id="card-toGames">
+        <div class="kb-card-header">
+          <div class="kb-card-info">
+            <h3>Go Back to Games</h3>
+            <p>Press this from the tools page to return to wherever you came from.</p>
+          </div>
+          <div class="kb-current" id="display-toGames"></div>
+        </div>
+        <div class="kb-record-area">
+          <button class="kb-record-btn" id="btn-toGames" onclick="startRecord('toGames')">
+            <span id="btnLabel-toGames">🎯 Click to record shortcut</span>
+          </button>
+          <div class="kb-status" id="status-toGames"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <button class="reset-all" onclick="resetAll()">↺ Reset all shortcuts to defaults</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-label">Tips</div>
+      <div class="tips-card">
+        <h3>How it works</h3>
+        <div class="tip">
+          <span class="tip-icon">⌘</span>
+          <span class="tip-text"><strong>Mac users:</strong> Use Command (⌘) instead of Ctrl. Just hold ⌘ when recording.</span>
+        </div>
+        <div class="tip">
+          <span class="tip-icon">⚡</span>
+          <span class="tip-text"><strong>Recording:</strong> Click the button, then press your desired key combo — it records automatically on keydown.</span>
+        </div>
+        <div class="tip">
+          <span class="tip-icon">🔒</span>
+          <span class="tip-text"><strong>Avoid browser shortcuts</strong> like Ctrl+T, Ctrl+W, Ctrl+R or they won't work reliably.</span>
+        </div>
+        <div class="tip">
+          <span class="tip-icon">💾</span>
+          <span class="tip-text"><strong>Auto-saved</strong> to your browser — settings persist across sessions.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const DEFAULTS = {
+      toTools: { key: 'k', ctrl: true, meta: false, shift: false },
+      toGames: { key: 'k', ctrl: true, meta: false, shift: false },
+    };
+    const BLOCKED = [
+      // block common browser shortcuts
+      { key: 't', ctrl: true }, { key: 'w', ctrl: true }, { key: 'n', ctrl: true },
+      { key: 'r', ctrl: true }, { key: 'l', ctrl: true }, { key: 'p', ctrl: true },
+      { key: 't', meta: true }, { key: 'w', meta: true }, { key: 'n', meta: true },
+      { key: 'r', meta: true }, { key: 'q', meta: true },
+    ];
+
+    function loadKB(id) {
+      try { return JSON.parse(localStorage.getItem('wg_kb_' + id)) || DEFAULTS[id]; }
+      catch { return DEFAULTS[id]; }
+    }
+    function saveKB(id, kb) { localStorage.setItem('wg_kb_' + id, JSON.stringify(kb)); }
+
+    function kbLabel(kb) {
+      const parts = [];
+      if (kb.meta) parts.push('⌘');
+      if (kb.ctrl) parts.push('Ctrl');
+      if (kb.shift) parts.push('Shift');
+      parts.push(kb.key.toUpperCase());
+      return parts;
+    }
+
+    function renderKBDisplay(id) {
+      const kb = loadKB(id);
+      const parts = kbLabel(kb);
+      const el = document.getElementById('display-' + id);
+      el.innerHTML = '<div class="kb-keys">' + parts.map((p,i) => `<span class="kb-key${i===parts.length-1?' green':''}">${p}</span>`).join('') + '</div>';
+    }
+
+    renderKBDisplay('toTools');
+    renderKBDisplay('toGames');
+
+    let activeRecording = null;
+    let recordHandler = null;
+
+    function startRecord(id) {
+      // Cancel any existing recording
+      if (activeRecording) cancelRecord(activeRecording);
+
+      activeRecording = id;
+      const btn = document.getElementById('btn-' + id);
+      const lbl = document.getElementById('btnLabel-' + id);
+      const status = document.getElementById('status-' + id);
+
+      btn.classList.add('recording');
+      lbl.textContent = '⏺ Listening… press your shortcut now';
+      status.textContent = 'Press any key combination (Esc to cancel)';
+      status.className = 'kb-status';
+
+      recordHandler = (e) => {
+        if (e.key === 'Escape') { cancelRecord(id); return; }
+
+        // ignore lone modifier keys
+        if (['Control','Meta','Shift','Alt','CapsLock'].includes(e.key)) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const kb = {
+          key: e.key.toLowerCase(),
+          ctrl: e.ctrlKey,
+          meta: e.metaKey,
+          shift: e.shiftKey,
+        };
+
+        // Check blocked
+        const isBlocked = BLOCKED.some(b =>
+          b.key === kb.key && !!b.ctrl === !!kb.ctrl && !!b.meta === !!kb.meta
+        );
+        if (isBlocked) {
+          status.textContent = '⚠ That shortcut is reserved by your browser. Try another.';
+          status.className = 'kb-status conflict';
+          return;
+        }
+
+        // Check conflict with other keybind
+        const otherId = id === 'toTools' ? 'toGames' : 'toTools';
+        const other = loadKB(otherId);
+        if (other.key === kb.key && !!other.ctrl === !!kb.ctrl && !!other.meta === !!kb.meta && !!other.shift === !!kb.shift) {
+          status.textContent = '⚠ Conflicts with your other shortcut. Choose a different one.';
+          status.className = 'kb-status conflict';
+          return;
+        }
+
+        saveKB(id, kb);
+        finishRecord(id, kb);
+      };
+
+      document.addEventListener('keydown', recordHandler, true);
+    }
+
+    function finishRecord(id, kb) {
+      activeRecording = null;
+      document.removeEventListener('keydown', recordHandler, true);
+      recordHandler = null;
+
+      const btn = document.getElementById('btn-' + id);
+      const lbl = document.getElementById('btnLabel-' + id);
+      const status = document.getElementById('status-' + id);
+
+      btn.classList.remove('recording');
+      lbl.textContent = '✎ Click to change shortcut';
+      status.textContent = '✓ Saved — ' + kbLabel(kb).join('+');
+      status.className = 'kb-status ok';
+      renderKBDisplay(id);
+
+      setTimeout(() => { status.textContent = ''; }, 3000);
+    }
+
+    function cancelRecord(id) {
+      activeRecording = null;
+      if (recordHandler) { document.removeEventListener('keydown', recordHandler, true); recordHandler = null; }
+
+      const btn = document.getElementById('btn-' + id);
+      const lbl = document.getElementById('btnLabel-' + id);
+      const status = document.getElementById('status-' + id);
+      btn.classList.remove('recording');
+      lbl.textContent = '🎯 Click to record shortcut';
+      status.textContent = '';
+    }
+
+    function resetAll() {
+      if (!confirm('Reset all shortcuts to defaults (Ctrl+K)?')) return;
+      Object.keys(DEFAULTS).forEach(id => {
+        saveKB(id, DEFAULTS[id]);
+        renderKBDisplay(id);
+        document.getElementById('btnLabel-' + id).textContent = '🎯 Click to record shortcut';
+        document.getElementById('status-' + id).textContent = '';
+      });
+    }
+  </script>
+
+</body>
+</html>

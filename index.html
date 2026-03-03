@@ -548,46 +548,6 @@
     <div>© 2025 WhimsGames</div>
   </footer>
 
-  <!-- CALCULATOR OVERLAY -->
-  <div class="calc-overlay" id="calcOverlay">
-    <div class="calc">
-      <div class="calc-header">
-        <span>Calculator</span>
-        <button class="calc-close" id="calcClose">✕</button>
-      </div>
-      <div class="calc-display">
-        <div class="calc-expr" id="calcExpr"></div>
-        <div class="calc-val" id="calcVal">0</div>
-      </div>
-      <div class="calc-grid">
-        <button class="calc-btn op" onclick="calcInput('AC')">AC</button>
-        <button class="calc-btn op" onclick="calcInput('+/-')">+/-</button>
-        <button class="calc-btn op" onclick="calcInput('%')">%</button>
-        <button class="calc-btn op" onclick="calcInput('/')">÷</button>
-
-        <button class="calc-btn" onclick="calcInput('7')">7</button>
-        <button class="calc-btn" onclick="calcInput('8')">8</button>
-        <button class="calc-btn" onclick="calcInput('9')">9</button>
-        <button class="calc-btn op" onclick="calcInput('*')">×</button>
-
-        <button class="calc-btn" onclick="calcInput('4')">4</button>
-        <button class="calc-btn" onclick="calcInput('5')">5</button>
-        <button class="calc-btn" onclick="calcInput('6')">6</button>
-        <button class="calc-btn op" onclick="calcInput('-')">−</button>
-
-        <button class="calc-btn" onclick="calcInput('1')">1</button>
-        <button class="calc-btn" onclick="calcInput('2')">2</button>
-        <button class="calc-btn" onclick="calcInput('3')">3</button>
-        <button class="calc-btn op" onclick="calcInput('+')">+</button>
-
-        <button class="calc-btn wide" onclick="calcInput('0')">0</button>
-        <button class="calc-btn" onclick="calcInput('.')">.</button>
-        <button class="calc-btn eq" onclick="calcInput('=')">=</button>
-      </div>
-      <div class="calc-hint">Press <strong>Ctrl + K</strong> to open / close</div>
-    </div>
-  </div>
-
   <script src="games.js"></script>
   <script>
     // ── LIVE PLAYER COUNT ──
@@ -711,96 +671,19 @@
       document.getElementById("no-results").style.display = visible === 0 ? "block" : "none";
     }
 
-    // ── CALCULATOR ──
-    let calcExpression = '';
-    let calcDisplay = '0';
-    let justEvaluated = false;
-
-    function calcInput(val) {
-      const exprEl = document.getElementById('calcExpr');
-      const valEl = document.getElementById('calcVal');
-
-      if (val === 'AC') {
-        calcExpression = '';
-        calcDisplay = '0';
-        justEvaluated = false;
-      } else if (val === '+/-') {
-        if (calcDisplay !== '0') {
-          calcDisplay = (parseFloat(calcDisplay) * -1).toString();
-        }
-      } else if (val === '%') {
-        calcDisplay = (parseFloat(calcDisplay) / 100).toString();
-      } else if (val === '=') {
-        try {
-          const full = calcExpression + calcDisplay;
-          exprEl.textContent = full + ' =';
-          const result = Function('"use strict"; return (' + full + ')')();
-          calcDisplay = parseFloat(result.toFixed(10)).toString();
-          calcExpression = '';
-          justEvaluated = true;
-        } catch {
-          calcDisplay = 'Error';
-          calcExpression = '';
-        }
-      } else if (['+', '-', '*', '/'].includes(val)) {
-        if (justEvaluated) {
-          calcExpression = calcDisplay + val;
-          calcDisplay = '0';
-          justEvaluated = false;
-        } else {
-          calcExpression += calcDisplay + val;
-          calcDisplay = '0';
-        }
-      } else {
-        if (justEvaluated) { calcDisplay = '0'; justEvaluated = false; }
-        if (val === '.' && calcDisplay.includes('.')) return;
-        calcDisplay = calcDisplay === '0' && val !== '.' ? val : calcDisplay + val;
-      }
-
-      if (val !== '=') {
-        const opMap = { '*': '×', '/': '÷', '+': '+', '-': '−' };
-        exprEl.textContent = calcExpression.replace(/[*/+-]/g, m => opMap[m] || m);
-      }
-      valEl.textContent = calcDisplay;
+    // ── KEYBIND (to tools) ──
+    function getKeybind(key) {
+      try { return JSON.parse(localStorage.getItem('wg_kb_' + key)); } catch { return null; }
     }
-
-    // Keyboard support for calculator
     document.addEventListener('keydown', e => {
-      // Ctrl+K opens/closes calculator
-      if (e.ctrlKey && e.key === 'k') {
-        e.preventDefault();
-        toggleCalc();
-        return;
-      }
-      if (!document.getElementById('calcOverlay').classList.contains('open')) return;
-      if (e.key === 'Escape') { closeCalc(); return; }
-      if (e.key >= '0' && e.key <= '9') calcInput(e.key);
-      else if (e.key === '.') calcInput('.');
-      else if (e.key === '+') calcInput('+');
-      else if (e.key === '-') calcInput('-');
-      else if (e.key === '*') calcInput('*');
-      else if (e.key === '/') { e.preventDefault(); calcInput('/'); }
-      else if (e.key === 'Enter' || e.key === '=') calcInput('=');
-      else if (e.key === 'Backspace') {
-        if (calcDisplay.length > 1) calcDisplay = calcDisplay.slice(0, -1);
-        else calcDisplay = '0';
-        document.getElementById('calcVal').textContent = calcDisplay;
-      }
-      else if (e.key === 'Escape') closeCalc();
+      const kb = getKeybind('toTools') || { key: 'k', ctrl: true, meta: false, shift: false };
+      const match = e.key.toLowerCase() === kb.key.toLowerCase()
+        && !!e.ctrlKey === !!kb.ctrl
+        && !!e.metaKey === !!kb.meta
+        && !!e.shiftKey === !!kb.shift;
+      if (match) { e.preventDefault(); window.location.href = 'tools.html'; }
     });
 
-    function toggleCalc() {
-      document.getElementById('calcOverlay').classList.toggle('open');
-    }
-
-    function closeCalc() {
-      document.getElementById('calcOverlay').classList.remove('open');
-    }
-
-    document.getElementById('calcClose').addEventListener('click', closeCalc);
-    document.getElementById('calcOverlay').addEventListener('click', e => {
-      if (e.target === document.getElementById('calcOverlay')) closeCalc();
-    });
   </script>
 
 </body>

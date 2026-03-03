@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Educational Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #080808;
+      --surface: #111111;
+      --surface2: #181818;
+      --border: #222222;
+      --green: #3ddc84;
+      --green-dim: #2ab86a;
+      --green-glow: rgba(61, 220, 132, 0.12);
+      --text: #f0f0f0;
+      --muted: #666;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--black); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    header {
+      padding: 0 40px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: rgba(8,8,8,0.97);
+      backdrop-filter: blur(12px);
+      z-index: 50;
+    }
+    .header-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1.1rem;
+      letter-spacing: -0.3px;
+    }
+    .header-title span { color: var(--green); }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .settings-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); font-size: 0.78rem; font-weight: 600;
+      padding: 6px 14px; border-radius: 9px; cursor: pointer;
+      text-decoration: none; transition: all 0.15s;
+    }
+    .settings-btn:hover { border-color: rgba(61,220,132,0.35); color: var(--text); }
+    .kb-hint {
+      font-size: 0.7rem; color: var(--muted);
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 4px 10px; border-radius: 20px;
+    }
+    .kb-hint kbd { color: var(--green); font-family: 'DM Sans', sans-serif; }
+
+    .page-hero {
+      padding: 40px 40px 30px;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+      font-weight: 800; letter-spacing: -1.2px;
+    }
+    .page-hero h1 span { color: var(--green); }
+    .page-hero p { margin-top: 6px; color: var(--muted); font-size: 0.88rem; }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      gap: 18px;
+      padding: 30px 40px 80px;
+    }
+
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden;
+    }
+    .tool-header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tool-icon {
+      width: 30px; height: 30px;
+      background: var(--green-glow);
+      border: 1px solid rgba(61,220,132,0.2);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; flex-shrink: 0;
+    }
+    .tool-title { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; }
+    .tool-body { padding: 18px; }
+
+    /* CALCULATOR */
+    .calc-display {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px;
+      text-align: right; margin-bottom: 10px;
+    }
+    .calc-expr { font-size: 0.7rem; color: var(--muted); min-height: 14px; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .calc-val { font-family: 'Syne', sans-serif; font-size: 1.9rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .cbtn {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 0.86rem; font-weight: 600;
+      padding: 12px 0; border-radius: 8px; cursor: pointer;
+      transition: background 0.12s, transform 0.1s;
+    }
+    .cbtn:hover { background: #1e1e1e; }
+    .cbtn:active { transform: scale(0.94); }
+    .cbtn.op { color: var(--green); }
+    .cbtn.eq { background: var(--green); border-color: var(--green); color: #000; }
+    .cbtn.eq:hover { background: var(--green-dim); }
+    .cbtn.wide { grid-column: span 2; }
+
+    /* UNIT CONVERTER */
+    .conv-tabs { display: flex; gap: 5px; margin-bottom: 14px; flex-wrap: wrap; }
+    .conv-tab {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); font-size: 0.71rem; font-weight: 600;
+      padding: 5px 11px; border-radius: 20px; cursor: pointer; transition: all 0.15s;
+    }
+    .conv-tab.active { background: var(--green); border-color: var(--green); color: #000; }
+    .conv-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 8px; }
+    .conv-iw { flex: 1; }
+    .conv-iw label { font-size: 0.7rem; color: var(--muted); display: block; margin-bottom: 3px; font-weight: 600; }
+    .conv-iw input, .conv-iw select {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+      padding: 9px 11px; border-radius: 8px; outline: none; transition: border-color 0.2s;
+    }
+    .conv-iw input:focus, .conv-iw select:focus { border-color: rgba(61,220,132,0.5); }
+    .conv-result {
+      background: var(--green-glow); border: 1px solid rgba(61,220,132,0.2);
+      border-radius: 9px; padding: 11px 14px;
+      font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
+      color: var(--green); text-align: center; margin-top: 6px; min-height: 42px;
+    }
+
+    /* TIMER */
+    .timer-display {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 11px; padding: 20px; text-align: center; margin-bottom: 14px;
+    }
+    .timer-time {
+      font-family: 'Syne', sans-serif; font-size: 2.6rem; font-weight: 800;
+      letter-spacing: -1.5px; transition: color 0.3s;
+    }
+    .timer-time.running { color: var(--green); }
+    .timer-time.done { color: #ff5e5e; }
+    .timer-label { font-size: 0.68rem; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .timer-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+    .timer-tab {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); font-size: 0.73rem; font-weight: 700;
+      padding: 7px; border-radius: 8px; cursor: pointer; transition: all 0.15s; text-align: center;
+    }
+    .timer-tab.active { background: var(--green); border-color: var(--green); color: #000; }
+    .timer-btns { display: flex; gap: 8px; margin-bottom: 10px; }
+    .tbtn {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem; font-weight: 700;
+      padding: 9px; border-radius: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .tbtn.start { background: var(--green); border-color: var(--green); color: #000; }
+    .tbtn.start:hover { background: var(--green-dim); }
+    .tbtn:hover { background: #1e1e1e; }
+    .timer-set { display: flex; gap: 8px; }
+    .timer-set > div { flex: 1; }
+    .timer-set input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+      padding: 9px; border-radius: 8px; outline: none; text-align: center; transition: border-color 0.2s;
+    }
+    .timer-set input:focus { border-color: rgba(61,220,132,0.5); }
+    .timer-set label { font-size: 0.66rem; color: var(--muted); display: block; text-align: center; margin-top: 3px; }
+
+    /* NOTES */
+    .notes-textarea {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.86rem;
+      padding: 12px; border-radius: 9px; outline: none; resize: none;
+      min-height: 160px; line-height: 1.6; transition: border-color 0.2s;
+    }
+    .notes-textarea:focus { border-color: rgba(61,220,132,0.5); }
+    .notes-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .notes-count { font-size: 0.7rem; color: var(--muted); }
+    .notes-btns { display: flex; align-items: center; gap: 8px; }
+    .notes-saved { color: var(--green); font-size: 0.7rem; opacity: 0; transition: opacity 0.3s; }
+    .notes-saved.show { opacity: 1; }
+    .nbtn {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); font-family: 'DM Sans', sans-serif;
+      font-size: 0.76rem; font-weight: 600;
+      padding: 6px 13px; border-radius: 7px; cursor: pointer; transition: all 0.15s;
+    }
+    .nbtn.primary { background: var(--green); border-color: var(--green); color: #000; }
+    .nbtn.primary:hover { background: var(--green-dim); }
+    .nbtn:hover { background: #1e1e1e; color: var(--text); }
+
+    /* PERCENTAGE */
+    .pct-modes { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+    .pct-mode {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); font-size: 0.71rem; font-weight: 600;
+      padding: 5px 11px; border-radius: 20px; cursor: pointer; transition: all 0.15s;
+    }
+    .pct-mode.active { background: var(--green); border-color: var(--green); color: #000; }
+    .pct-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .pct-row input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+      padding: 9px 11px; border-radius: 8px; outline: none; transition: border-color 0.2s;
+    }
+    .pct-row input:focus { border-color: rgba(61,220,132,0.5); }
+    .pct-row span { color: var(--muted); font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+    .pct-result {
+      background: var(--green-glow); border: 1px solid rgba(61,220,132,0.2);
+      border-radius: 9px; padding: 11px 14px;
+      font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700;
+      color: var(--green); text-align: center; min-height: 42px;
+    }
+
+    /* WORD COUNTER */
+    .wc-textarea {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.86rem;
+      padding: 12px; border-radius: 9px; outline: none; resize: none;
+      min-height: 120px; line-height: 1.6; transition: border-color 0.2s;
+    }
+    .wc-textarea:focus { border-color: rgba(61,220,132,0.5); }
+    .wc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 10px; }
+    .wc-stat {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 10px; text-align: center;
+    }
+    .wc-stat-val { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--green); }
+    .wc-stat-label { font-size: 0.64rem; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* DICTIONARY */
+    .dict-search-wrap { position: relative; margin-bottom: 12px; }
+    .dict-search-wrap input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+      padding: 10px 50px 10px 14px; border-radius: 9px; outline: none; transition: border-color 0.2s;
+    }
+    .dict-search-wrap input:focus { border-color: rgba(61,220,132,0.5); }
+    .dict-search-btn {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      background: var(--green); border: none; color: #000;
+      font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 700;
+      padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: background 0.15s;
+    }
+    .dict-search-btn:hover { background: var(--green-dim); }
+    .dict-result { min-height: 140px; }
+    .dict-loading { color: var(--muted); font-size: 0.82rem; padding: 20px 0; text-align: center; }
+    .dict-word {
+      font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .dict-phonetic { color: var(--green); font-size: 0.82rem; margin-bottom: 12px; }
+    .dict-pos {
+      font-size: 0.7rem; font-weight: 700; color: var(--green);
+      background: var(--green-glow); border: 1px solid rgba(61,220,132,0.2);
+      padding: 2px 9px; border-radius: 20px; display: inline-block;
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; margin-top: 10px;
+    }
+    .dict-def {
+      font-size: 0.84rem; color: var(--text); line-height: 1.6;
+      padding-left: 12px; border-left: 2px solid var(--border);
+      margin-bottom: 6px;
+    }
+    .dict-example {
+      font-size: 0.78rem; color: var(--muted); font-style: italic;
+      padding-left: 12px; margin-bottom: 8px; line-height: 1.5;
+    }
+    .dict-error { color: #ff6b6b; font-size: 0.84rem; padding: 16px 0; text-align: center; }
+
+    @media (max-width: 600px) {
+      header, .page-hero, .tools-grid { padding-left: 18px; padding-right: 18px; }
+      .tools-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-title">Educational <span>Tools</span></div>
+    <div class="header-right">
+      <span class="kb-hint" id="kbHintEl">Press <kbd id="kbHintText">Ctrl+K</kbd> to go back</span>
+      <a href="settings.html" class="settings-btn">⚙ Settings</a>
+    </div>
+  </header>
+
+  <div class="page-hero">
+    <h1>Your <span>Toolkit</span></h1>
+    <p>Calculator, dictionary, converter, timer, notes & more.</p>
+  </div>
+
+  <div class="tools-grid">
+
+    <!-- CALCULATOR -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-icon">🧮</div>
+        <div class="tool-title">Calculator</div>
+      </div>
+      <div class="tool-body">
+        <div class="calc-display">
+          <div class="calc-expr" id="calcExpr"></div>
+          <div class="calc-val" id="calcVal">0</div>
+        </div>
+        <div class="calc-grid">
+          <button class="cbtn op" onclick="calcInput('AC')">AC</button>
+          <button class="cbtn op" onclick="calcInput('+/-')">+/−</button>
+          <button class="cbtn op" onclick="calcInput('%')">%</button>
+          <button class="cbtn op" onclick="calcInput('/')">÷</button>
+          <button class="cbtn" onclick="calcInput('7')">7</button>
+          <button class="cbtn" onclick="calcInput('8')">8</button>
+          <button class="cbtn" onclick="calcInput('9')">9</button>
+          <button class="cbtn op" onclick="calcInput('*')">×</button>
+          <button class="cbtn" onclick="calcInput('4')">4</button>
+          <button class="cbtn" onclick="calcInput('5')">5</button>
+          <button class="cbtn" onclick="calcInput('6')">6</button>
+          <button class="cbtn op" onclick="calcInput('-')">−</button>
+          <button class="cbtn" onclick="calcInput('1')">1</button>
+          <button class="cbtn" onclick="calcInput('2')">2</button>
+          <button class="cbtn" onclick="calcInput('3')">3</button>
+          <button class="cbtn op" onclick="calcInput('+')">+</button>
+          <button class="cbtn wide" onclick="calcInput('0')">0</button>
+          <button class="cbtn" onclick="calcInput('.')">.</button>
+          <button class="cbtn eq" onclick="calcInput('=')">=</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DICTIONARY -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-icon">📖</div>
+        <div class="tool-title">Dictionary</div>
+      </div>
+      <div class="tool-body">
+        <div class="dict-search-wrap">
+          <input type="text" id="dictInput" placeholder="Look up a word…" onkeydown="if(event.key==='Enter')lookupWord()">
+          <button class="dict-search-btn" onclick="lookupWord()">Look up</button>
+        </div>
+        <div class="dict-result" id="dictResult">
+          <div class="dict-loading">Type a word and hit Look up</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UNIT CONVERTER -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-icon">📐</div>
+        <div class="tool-title">Unit Converter</div>
+      </div>
+      <div class="tool-body">
+        <div class="conv-tabs">
+          <button class="conv-tab active" onclick="setConvType('length',this)">Length</button>
+          <button class="conv-tab" onclick="setConvType('weight',this)">Weight</button>
+          <button class="conv-tab" onclick="setConvType('temp',this)">Temp</button>
+          <button class="conv-tab" onclick="setConvType('speed',this)">Speed</button>
+          <button class="conv-tab" onclick="setConvType('area',this)">Area</button>
+        </div>
+        <div class="conv-row">
+          <div class="conv-iw"><label>Value</label><input type="number" id="convFrom" oninput="doConvert()" placeholder="0"></div>
+          <div class="conv-iw"><label>From</label><select id="convFromUnit" onchange="doConvert()"></select></div>
+          <div class="conv-iw"><label>To</label><select id="convToUnit" onchange="doConvert()"></select></div>
+        </div>
+        <div class="conv-result" id="convResult">—</div>
+      </div>
+    </div>
+
+    <!-- TIMER -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-icon">⏱️</div>
+        <div class="tool-title">Timer & Stopwatch</div>
+      </div>
+      <div class="tool-body">
+        <div class="timer-tabs">
+          <div class="timer-tab active" onclick="switchTimerMode('stopwatch',this)">Stopwatch</div>
+          <div class="timer-tab" onclick="switchTimerMode('timer',this)">Countdown</div>
+        </div>
+        <div class="timer-display">
+          <div class="timer-time" id="timerDisplay">00:00.0</div>
+          <div class="timer-label" id="timerLabel">Stopwatch</div>
+        </div>
+        <div class="timer-btns">
+          <button class="tbtn start" id="timerStartBtn" onclick="timerToggle()">Start</button>
+          <button class="tbtn" onclick="timerReset()">Reset</button>
+        </div>
+        <div class="timer-set" id="timerSetRow" style="display:none;">
+          <div><input type="number" id="timerMins" placeholder="00" min="0" max="99" oninput="timerReset()"><label>min</label></div>
+          <div><input type="number" id="timerSecs" placeholder="00" min="0" max="59" oninput="timerReset()"><label>sec</label></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-icon">📝</div>
+        <div class="tool-title">Quick Notes</div>
+      </div>
+      <div class="tool-body">
+        <textarea class="notes-textarea" id="notesArea" placeholder="Start typing your notes here…" oninput="notesUpdate()"></textarea>
+        <div class="notes-footer">
+          <span class="notes-count" id="notesCount">0 characters</span>
+          <div class="notes-btns">
+            <span class="notes-saved" id="notesSaved">✓ Saved</span>
+            <button class="nbtn primary" onclick="notesSave()">Save</button>
+            <button class="nbtn" onclick="notesClear()">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERCENTAGE -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-icon">💯</div>
+        <div class="tool-title">Percentage Calculator</div>
+      </div>
+      <div class="tool-body">
+        <div class="pct-modes">
+          <button class="pct-mode active" onclick="setPctMode('of',this)">% of number</button>
+          <button class="pct-mode" onclick="setPctMode('is',this)">what % is</button>
+          <button class="pct-mode" onclick="setPctMode('change',this)">% change</button>
+        </div>
+        <div id="pctInputs"></div>
+        <div class="pct-result" id="pctResult">—</div>
+      </div>
+    </div>
+
+    <!-- WORD COUNTER -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-icon">🔤</div>
+        <div class="tool-title">Word & Character Counter</div>
+      </div>
+      <div class="tool-body">
+        <textarea class="wc-textarea" id="wcText" placeholder="Paste or type your text here…" oninput="wcUpdate()"></textarea>
+        <div class="wc-stats">
+          <div class="wc-stat"><div class="wc-stat-val" id="wcWords">0</div><div class="wc-stat-label">Words</div></div>
+          <div class="wc-stat"><div class="wc-stat-val" id="wcChars">0</div><div class="wc-stat-label">Characters</div></div>
+          <div class="wc-stat"><div class="wc-stat-val" id="wcSentences">0</div><div class="wc-stat-label">Sentences</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ── KEYBINDS ──
+    function getKB(key) {
+      try { return JSON.parse(localStorage.getItem('wg_kb_' + key)); } catch { return null; }
+    }
+    function kbLabel(kb) {
+      const parts = [];
+      if (kb.meta) parts.push('⌘');
+      if (kb.ctrl) parts.push('Ctrl');
+      if (kb.shift) parts.push('Shift');
+      parts.push(kb.key.toUpperCase());
+      return parts.join('+');
+    }
+    const backKB = getKB('toGames') || { key: 'k', ctrl: true, meta: false, shift: false };
+    document.getElementById('kbHintText').textContent = kbLabel(backKB);
+
+    document.addEventListener('keydown', e => {
+      // Back to games keybind
+      const bg = getKB('toGames') || { key: 'k', ctrl: true, meta: false, shift: false };
+      if (e.key.toLowerCase() === bg.key.toLowerCase()
+          && !!e.ctrlKey === !!bg.ctrl && !!e.metaKey === !!bg.meta && !!e.shiftKey === !!bg.shift) {
+        e.preventDefault(); history.back(); return;
+      }
+      // Calculator keyboard input (only when no input focused)
+      const tag = document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key >= '0' && e.key <= '9') calcInput(e.key);
+      else if (e.key === '.') calcInput('.');
+      else if (e.key === '+') calcInput('+');
+      else if (e.key === '-') calcInput('-');
+      else if (e.key === '*') calcInput('*');
+      else if (e.key === '/') { e.preventDefault(); calcInput('/'); }
+      else if (e.key === 'Enter' || e.key === '=') calcInput('=');
+      else if (e.key === 'Escape') calcInput('AC');
+      else if (e.key === 'Backspace') {
+        if (calcDisplay.length > 1) calcDisplay = calcDisplay.slice(0,-1);
+        else calcDisplay = '0';
+        document.getElementById('calcVal').textContent = calcDisplay;
+      }
+    });
+
+    // ── CALCULATOR ──
+    let calcExprStr = '', calcDisplay = '0', justEvaled = false;
+    function calcInput(v) {
+      const exprEl = document.getElementById('calcExpr');
+      const valEl = document.getElementById('calcVal');
+      if (v === 'AC') { calcExprStr = ''; calcDisplay = '0'; justEvaled = false; }
+      else if (v === '+/-') { calcDisplay = (parseFloat(calcDisplay) * -1).toString(); }
+      else if (v === '%') { calcDisplay = (parseFloat(calcDisplay) / 100).toString(); }
+      else if (v === '=') {
+        try {
+          const full = calcExprStr + calcDisplay;
+          exprEl.textContent = full.replace(/\*/g,'×').replace(/\//g,'÷') + ' =';
+          const r = Function('"use strict";return(' + full + ')')();
+          calcDisplay = parseFloat(r.toFixed(10)).toString();
+          calcExprStr = ''; justEvaled = true;
+        } catch { calcDisplay = 'Error'; calcExprStr = ''; }
+      } else if (['+','-','*','/'].includes(v)) {
+        if (justEvaled) { calcExprStr = calcDisplay + v; calcDisplay = '0'; justEvaled = false; }
+        else { calcExprStr += calcDisplay + v; calcDisplay = '0'; }
+      } else {
+        if (justEvaled) { calcDisplay = '0'; justEvaled = false; }
+        if (v === '.' && calcDisplay.includes('.')) return;
+        calcDisplay = calcDisplay === '0' && v !== '.' ? v : calcDisplay + v;
+      }
+      if (v !== '=') exprEl.textContent = calcExprStr.replace(/\*/g,'×').replace(/\//g,'÷');
+      valEl.textContent = calcDisplay;
+    }
+
+    // ── DICTIONARY (Free Dictionary API) ──
+    async function lookupWord() {
+      const word = document.getElementById('dictInput').value.trim();
+      if (!word) return;
+      const res = document.getElementById('dictResult');
+      res.innerHTML = '<div class="dict-loading">Looking up <em>' + word + '</em>…</div>';
+      try {
+        const r = await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(word));
+        if (!r.ok) throw new Error('not found');
+        const data = await r.json();
+        const entry = data[0];
+        const phonetic = entry.phonetics?.find(p => p.text)?.text || '';
+        let html = `<div class="dict-word">${entry.word}</div>`;
+        if (phonetic) html += `<div class="dict-phonetic">${phonetic}</div>`;
+        entry.meanings.slice(0, 3).forEach(m => {
+          html += `<div class="dict-pos">${m.partOfSpeech}</div>`;
+          m.definitions.slice(0, 2).forEach(d => {
+            html += `<div class="dict-def">${d.definition}</div>`;
+            if (d.example) html += `<div class="dict-example">"${d.example}"</div>`;
+          });
+        });
+        res.innerHTML = html;
+      } catch {
+        res.innerHTML = `<div class="dict-error">No results found for "<strong>${word}</strong>".<br><span style="font-size:0.78rem;color:var(--muted)">Check spelling or try another word.</span></div>`;
+      }
+    }
+
+    // ── UNIT CONVERTER ──
+    const convData = {
+      length: { units: ['mm','cm','m','km','in','ft','yd','mi'], toBase: [0.001,0.01,1,1000,0.0254,0.3048,0.9144,1609.344] },
+      weight: { units: ['mg','g','kg','lb','oz','t'], toBase: [0.000001,0.001,1,0.453592,0.0283495,1000] },
+      temp:   { units: ['°C','°F','K'], toBase: null },
+      speed:  { units: ['m/s','km/h','mph','knots'], toBase: [1,0.277778,0.44704,0.514444] },
+      area:   { units: ['mm²','cm²','m²','km²','ft²','ac'], toBase: [0.000001,0.0001,1,1000000,0.092903,4046.86] },
+    };
+    let convType = 'length';
+    function setConvType(t, btn) {
+      convType = t;
+      document.querySelectorAll('.conv-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const d = convData[t];
+      const fu = document.getElementById('convFromUnit'), tu = document.getElementById('convToUnit');
+      fu.innerHTML = tu.innerHTML = d.units.map(u => `<option>${u}</option>`).join('');
+      tu.selectedIndex = 1; doConvert();
+    }
+    function doConvert() {
+      const val = parseFloat(document.getElementById('convFrom').value);
+      if (isNaN(val)) { document.getElementById('convResult').textContent = '—'; return; }
+      const d = convData[convType];
+      const fi = d.units.indexOf(document.getElementById('convFromUnit').value);
+      const ti = d.units.indexOf(document.getElementById('convToUnit').value);
+      let result;
+      if (convType === 'temp') {
+        const fu = d.units[fi], tu2 = d.units[ti];
+        let c = fu === '°C' ? val : fu === '°F' ? (val-32)*5/9 : val-273.15;
+        result = tu2 === '°C' ? c : tu2 === '°F' ? c*9/5+32 : c+273.15;
+      } else {
+        result = val * d.toBase[fi] / d.toBase[ti];
+      }
+      document.getElementById('convResult').textContent = `${val} ${d.units[fi]} = ${parseFloat(result.toFixed(8))} ${d.units[ti]}`;
+    }
+    setConvType('length', document.querySelector('.conv-tab'));
+
+    // ── TIMER ──
+    let timerMode = 'stopwatch', timerRunning = false, timerInterval = null, timerMs = 0, timerTarget = 0;
+    function switchTimerMode(mode, btn) {
+      timerMode = mode; timerReset();
+      document.querySelectorAll('.timer-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('timerSetRow').style.display = mode === 'timer' ? 'flex' : 'none';
+      document.getElementById('timerLabel').textContent = mode === 'stopwatch' ? 'Stopwatch' : 'Countdown';
+      document.getElementById('timerDisplay').textContent = mode === 'stopwatch' ? '00:00.0' : '00:00';
+    }
+    function timerToggle() {
+      if (timerRunning) {
+        clearInterval(timerInterval); timerRunning = false;
+        document.getElementById('timerStartBtn').textContent = 'Resume';
+        document.getElementById('timerDisplay').classList.remove('running');
+      } else {
+        if (timerMode === 'timer' && timerMs === 0) {
+          const m = parseInt(document.getElementById('timerMins').value)||0;
+          const s = parseInt(document.getElementById('timerSecs').value)||0;
+          timerTarget = (m*60+s)*1000; if (!timerTarget) return; timerMs = timerTarget;
+        }
+        timerRunning = true;
+        document.getElementById('timerStartBtn').textContent = 'Pause';
+        document.getElementById('timerDisplay').classList.add('running');
+        document.getElementById('timerDisplay').classList.remove('done');
+        const start = Date.now() - (timerMode === 'stopwatch' ? timerMs : (timerTarget - timerMs));
+        timerInterval = setInterval(() => {
+          const el = document.getElementById('timerDisplay');
+          if (timerMode === 'stopwatch') {
+            timerMs = Date.now() - start;
+            const m = Math.floor(timerMs/60000), s = Math.floor((timerMs%60000)/1000), ds = Math.floor((timerMs%1000)/100);
+            el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${ds}`;
+          } else {
+            timerMs = timerTarget - (Date.now() - start);
+            if (timerMs <= 0) {
+              timerMs = 0; clearInterval(timerInterval); timerRunning = false;
+              el.textContent = '00:00'; el.classList.remove('running'); el.classList.add('done');
+              document.getElementById('timerStartBtn').textContent = 'Start'; return;
+            }
+            const m = Math.floor(timerMs/60000), s = Math.floor((timerMs%60000)/1000);
+            el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+          }
+        }, 100);
+      }
+    }
+    function timerReset() {
+      clearInterval(timerInterval); timerRunning = false; timerMs = 0; timerTarget = 0;
+      document.getElementById('timerStartBtn').textContent = 'Start';
+      const el = document.getElementById('timerDisplay');
+      el.classList.remove('running','done');
+      el.textContent = timerMode === 'stopwatch' ? '00:00.0' : '00:00';
+    }
+
+    // ── NOTES ──
+    const notesEl = document.getElementById('notesArea');
+    notesEl.value = localStorage.getItem('wg_notes') || '';
+    notesUpdate();
+    function notesUpdate() { document.getElementById('notesCount').textContent = notesEl.value.length + ' characters'; }
+    function notesSave() {
+      localStorage.setItem('wg_notes', notesEl.value);
+      const s = document.getElementById('notesSaved'); s.classList.add('show');
+      setTimeout(() => s.classList.remove('show'), 1800);
+    }
+    function notesClear() { if (confirm('Clear all notes?')) { notesEl.value = ''; notesUpdate(); localStorage.removeItem('wg_notes'); } }
+
+    // ── PERCENTAGE ──
+    let pctMode = 'of';
+    function setPctMode(m, btn) {
+      pctMode = m;
+      document.querySelectorAll('.pct-mode').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active'); renderPctInputs();
+    }
+    function renderPctInputs() {
+      const el = document.getElementById('pctInputs');
+      if (pctMode === 'of') el.innerHTML = `<div class="pct-row"><input type="number" id="pA" placeholder="%" oninput="calcPct()"><span>% of</span><input type="number" id="pB" placeholder="number" oninput="calcPct()"></div>`;
+      else if (pctMode === 'is') el.innerHTML = `<div class="pct-row"><input type="number" id="pA" placeholder="number" oninput="calcPct()"><span>is what % of</span><input type="number" id="pB" placeholder="total" oninput="calcPct()"></div>`;
+      else el.innerHTML = `<div class="pct-row"><span>From</span><input type="number" id="pA" placeholder="old" oninput="calcPct()"><span>to</span><input type="number" id="pB" placeholder="new" oninput="calcPct()"></div>`;
+    }
+    function calcPct() {
+      const a = parseFloat(document.getElementById('pA')?.value), b = parseFloat(document.getElementById('pB')?.value);
+      const res = document.getElementById('pctResult');
+      if (isNaN(a) || isNaN(b)) { res.textContent = '—'; return; }
+      let r;
+      if (pctMode === 'of') r = (a/100)*b;
+      else if (pctMode === 'is') r = (a/b)*100;
+      else r = ((b-a)/Math.abs(a))*100;
+      res.textContent = (pctMode === 'is' || pctMode === 'change') ? `${parseFloat(r.toFixed(4))}%` : parseFloat(r.toFixed(6));
+    }
+    renderPctInputs();
+
+    // ── WORD COUNTER ──
+    function wcUpdate() {
+      const t = document.getElementById('wcText').value;
+      document.getElementById('wcWords').textContent = t.trim() ? t.trim().split(/\s+/).length : 0;
+      document.getElementById('wcChars').textContent = t.length;
+      document.getElementById('wcSentences').textContent = t.trim() ? t.split(/[.!?]+/).filter(s=>s.trim()).length : 0;
+    }
+  </script>
+</body>
+</html>
