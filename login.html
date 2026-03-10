@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — Whims Games</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    :root{--black:#080808;--surface:#111;--surface2:#181818;--border:#222;--green:#3ddc84;--green-dim:#2ab86a;--green-glow:rgba(61,220,132,0.12);--text:#f0f0f0;--muted:#666;--red:#ff5e5e;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+    .card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:36px;animation:fadeUp 0.3s ease;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+    .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;text-align:center;margin-bottom:28px;}
+    .logo span{color:var(--green);}
+    .tabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:24px;gap:3px;}
+    .tab{flex:1;padding:8px;text-align:center;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;color:var(--muted);transition:all 0.15s;}
+    .tab.active{background:var(--green);color:#000;}
+    .field{margin-bottom:14px;}
+    .field label{display:block;font-size:0.72rem;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em;}
+    .field input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;padding:11px 13px;border-radius:9px;outline:none;transition:border-color 0.2s;}
+    .field input:focus{border-color:rgba(61,220,132,0.5);}
+    .field .hint{font-size:0.7rem;color:var(--muted);margin-top:4px;}
+    .btn{width:100%;background:var(--green);border:none;color:#000;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;padding:13px;border-radius:10px;cursor:pointer;transition:background 0.15s;margin-top:6px;}
+    .btn:hover{background:var(--green-dim);}
+    .btn:disabled{opacity:0.5;cursor:not-allowed;}
+    .err{background:rgba(255,94,94,0.1);border:1px solid rgba(255,94,94,0.3);color:var(--red);padding:10px 13px;border-radius:8px;font-size:0.8rem;margin-bottom:14px;display:none;}
+    .err.show{display:block;}
+    .ok{background:var(--green-glow);border:1px solid rgba(61,220,132,0.3);color:var(--green);padding:10px 13px;border-radius:8px;font-size:0.8rem;margin-bottom:14px;display:none;}
+    .ok.show{display:block;}
+    .divider{text-align:center;color:var(--muted);font-size:0.75rem;margin:16px 0;position:relative;}
+    .divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border);}
+    .divider::before{left:0;} .divider::after{right:0;}
+    .back{text-align:center;margin-top:18px;font-size:0.78rem;color:var(--muted);}
+    .back a{color:var(--green);text-decoration:none;}
+    .username-check{font-size:0.7rem;margin-top:4px;}
+    .username-check.ok{color:var(--green);}
+    .username-check.bad{color:var(--red);}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">Whims <span>Games</span></div>
+    <div class="tabs">
+      <div class="tab active" id="tabSignIn" onclick="switchTab('signin')">Sign In</div>
+      <div class="tab" id="tabSignUp" onclick="switchTab('signup')">Create Account</div>
+    </div>
+
+    <div id="errBox" class="err"></div>
+    <div id="okBox" class="ok"></div>
+
+    <!-- SIGN IN -->
+    <div id="signinForm">
+      <div class="field"><label>Email</label><input type="email" id="siEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="field"><label>Password</label><input type="password" id="siPass" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn" id="siBtn" onclick="signIn()">Sign In</button>
+    </div>
+
+    <!-- SIGN UP -->
+    <div id="signupForm" style="display:none">
+      <div class="field">
+        <label>Username <span style="color:var(--muted);font-size:0.65rem;text-transform:none">(unique, no spaces)</span></label>
+        <input type="text" id="suUser" placeholder="coolplayer99" autocomplete="username"
+          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'');checkUsername(this.value)"
+          onpaste="setTimeout(()=>{this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'');checkUsername(this.value)},0)">
+        <div class="username-check" id="userCheck"></div>
+      </div>
+      <div class="field"><label>Display Name</label><input type="text" id="suDisplay" placeholder="Cool Player" autocomplete="name"></div>
+      <div class="field"><label>Email</label><input type="email" id="suEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="suPass" placeholder="8+ characters" autocomplete="new-password">
+        <div class="hint">At least 8 characters</div>
+      </div>
+      <button class="btn" id="suBtn" onclick="signUp()">Create Account</button>
+    </div>
+
+    <div class="back"><a href="index.html">← Back to games</a></div>
+  </div>
+
+  <script>
+    const sb = supabase.createClient(
+      'https://rjrnqiklifurcqzvavtt.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcm5xaWtsaWZ1cmNxenZhdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0OTQ5OTEsImV4cCI6MjA4ODA3MDk5MX0.4DXwtSUQ7yA2aH-N2bEnobSi2gRbFw0BANdfgSfROx0'
+    );
+
+    // Redirect if already logged in
+    sb.auth.getSession().then(({ data: { session } }) => {
+      // Only redirect if session exists and we didn't come from profile (prevents loop)
+      const fromProfile = document.referrer.includes('profile.html');
+      if (session && !fromProfile) window.location.href = 'profile.html';
+    });
+
+    function switchTab(t) {
+      document.getElementById('signinForm').style.display = t==='signin' ? '' : 'none';
+      document.getElementById('signupForm').style.display = t==='signup' ? '' : 'none';
+      document.getElementById('tabSignIn').className = 'tab' + (t==='signin'?' active':'');
+      document.getElementById('tabSignUp').className = 'tab' + (t==='signup'?' active':'');
+      clearMsgs();
+    }
+
+    function showErr(msg) {
+      const e = document.getElementById('errBox');
+      e.textContent = msg; e.classList.add('show');
+      document.getElementById('okBox').classList.remove('show');
+    }
+    function showOk(msg) {
+      const o = document.getElementById('okBox');
+      o.textContent = msg; o.classList.add('show');
+      document.getElementById('errBox').classList.remove('show');
+    }
+    function clearMsgs() {
+      document.getElementById('errBox').classList.remove('show');
+      document.getElementById('okBox').classList.remove('show');
+    }
+
+    let usernameOk = false;
+    let usernameTimer = null;
+    async function checkUsername(val) {
+      const el = document.getElementById('userCheck');
+      usernameOk = false;
+      if (!val) { el.textContent=''; return; }
+      if (!/^[a-z0-9_]{3,20}$/.test(val)) {
+        el.textContent = '✗ 3-20 chars, lowercase letters/numbers/underscore only';
+        el.className = 'username-check bad'; return;
+      }
+      el.textContent = 'Checking…'; el.className = 'username-check';
+      clearTimeout(usernameTimer);
+      usernameTimer = setTimeout(async () => {
+        const { data } = await sb.from('profiles').select('id').ilike('username', val).maybeSingle();
+        if (data) {
+          el.textContent = '✗ Already taken';
+          el.className = 'username-check bad';
+        } else {
+          el.textContent = '✓ Available';
+          el.className = 'username-check ok';
+          usernameOk = true;
+        }
+      }, 400);
+    }
+
+    async function signIn() {
+      const email = document.getElementById('siEmail').value.trim();
+      const pass = document.getElementById('siPass').value;
+      if (!email || !pass) { showErr('Please fill in all fields.'); return; }
+      const btn = document.getElementById('siBtn');
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      console.log('Signing in:', email);
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+      console.log('signIn result:', data, error);
+      if (error) { showErr(error.message); btn.disabled=false; btn.textContent='Sign In'; }
+      else window.location.href = 'profile.html';
+    }
+
+    async function signUp() {
+      const username = document.getElementById('suUser').value.trim().toLowerCase();
+      const display = document.getElementById('suDisplay').value.trim();
+      const email = document.getElementById('suEmail').value.trim();
+      const pass = document.getElementById('suPass').value;
+
+      console.log('signUp called', { username, email, pass: pass.length, usernameOk });
+
+      if (!username || !email || !pass) { showErr('Please fill in all fields.'); return; }
+      if (pass.length < 8) { showErr('Password must be at least 8 characters.'); return; }
+
+      // Validate username format even if check didn't run
+      if (!/^[a-z0-9_]{3,20}$/.test(username)) { showErr('Username must be 3-20 chars, lowercase letters/numbers/underscore only.'); return; }
+
+      const btn = document.getElementById('suBtn');
+      btn.disabled = true; btn.textContent = 'Creating account…';
+
+      console.log('Calling sb.auth.signUp…');
+      const { data: signupData, error } = await sb.auth.signUp({
+        email, password: pass,
+        options: {
+          data: { username, display_name: display || username },
+          emailRedirectTo: 'https://whims00.github.io/verified.html'
+        }
+      });
+
+      console.log('signUp result:', signupData, error);
+
+      if (error) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already exists')) {
+          showErr('This email is already registered. Try signing in instead.');
+        } else if (msg.includes('invalid email')) {
+          showErr('Please enter a valid email address.');
+        } else if (msg.includes('password')) {
+          showErr('Password is too weak. Use at least 8 characters.');
+        } else {
+          showErr(error.message);
+        }
+        btn.disabled = false; btn.textContent = 'Create Account';
+        return;
+      }
+
+      // Supabase silently returns a fake user if email already exists (no error) — detect it
+      if (signupData?.user?.identities?.length === 0) {
+        showErr('This email is already registered. Try signing in instead.');
+        btn.disabled = false; btn.textContent = 'Create Account';
+        return;
+      }
+
+      // Insert profile row
+      if (signupData?.user) {
+        console.log('Inserting profile for', signupData.user.id);
+        const { error: profErr } = await sb.from('profiles').upsert({
+          id: signupData.user.id,
+          username: username,
+          display_name: display || username,
+          elo: 1200, wins: 0, losses: 0, draws: 0
+        }, { onConflict: 'id' });
+        if (profErr) console.warn('Profile upsert error:', profErr.message);
+      }
+
+      document.getElementById('signupForm').style.display = 'none';
+      document.getElementById('okBox').classList.remove('show');
+      document.getElementById('errBox').classList.remove('show');
+      showConfirmScreen(email);
+      btn.disabled = false; btn.textContent = 'Create Account';
+    }
+
+    let resendCount = 0;
+    let resendEmail = '';
+    let resendCooldown = null;
+
+    function showConfirmScreen(email) {
+      resendEmail = email;
+      resendCount = 0;
+      const card = document.querySelector('.card');
+      // Hide tabs
+      document.querySelector('.tabs').style.display = 'none';
+
+      const screen = document.createElement('div');
+      screen.id = 'confirmScreen';
+      screen.style.cssText = 'text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;';
+      screen.innerHTML = `
+        <div style="font-size:2.5rem;">📬</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;">Check your email</div>
+        <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;">
+          We sent a confirmation link to<br>
+          <strong style="color:var(--text)">${email}</strong><br>
+          Check your inbox and spam folder.
+        </div>
+        <button id="resendBtn" class="btn" style="margin-top:4px;" onclick="resendEmail_()">Resend email</button>
+        <div id="resendStatus" style="font-size:0.75rem;color:var(--muted);min-height:18px;"></div>
+        <div id="resendCounter" style="font-size:0.72rem;color:var(--muted);">3 resends remaining</div>
+        <a href="index.html" style="font-size:0.78rem;color:var(--muted);text-decoration:none;margin-top:4px;">← Back to games</a>
+      `;
+      card.appendChild(screen);
+    }
+
+    async function resendEmail_() {
+      if (resendCount >= 3) return;
+      const btn = document.getElementById('resendBtn');
+      const status = document.getElementById('resendStatus');
+      const counter = document.getElementById('resendCounter');
+
+      btn.disabled = true;
+      status.textContent = 'Sending…';
+      status.style.color = 'var(--muted)';
+
+      const { error } = await sb.auth.resend({
+        type: 'signup',
+        email: resendEmail,
+        options: { emailRedirectTo: 'https://whims00.github.io/verified.html' }
+      });
+
+      if (error) {
+        status.textContent = '✗ ' + error.message;
+        status.style.color = 'var(--red)';
+        btn.disabled = false;
+        return;
+      }
+
+      resendCount++;
+      const left = 3 - resendCount;
+      counter.textContent = left === 0 ? 'No resends remaining' : left + ' resend' + (left === 1 ? '' : 's') + ' remaining';
+      status.textContent = '✓ Sent! Check your inbox.';
+      status.style.color = 'var(--green)';
+
+      if (resendCount >= 3) {
+        btn.disabled = true;
+        btn.textContent = 'No resends left';
+        return;
+      }
+
+      // 30s cooldown
+      let secs = 30;
+      btn.textContent = 'Resend in ' + secs + 's';
+      resendCooldown = setInterval(() => {
+        secs--;
+        if (secs <= 0) {
+          clearInterval(resendCooldown);
+          btn.disabled = false;
+          btn.textContent = 'Resend email';
+          status.textContent = '';
+        } else {
+          btn.textContent = 'Resend in ' + secs + 's';
+        }
+      }, 1000);
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      if (document.getElementById('signinForm').style.display !== 'none') signIn();
+      else signUp();
+    });
+  </script>
+</body>
+</html>

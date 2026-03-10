@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Verified — Whims Games</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #080808; --surface: #111111; --border: #222222;
+      --green: #3ddc84; --green-dim: #2ab86a; --green-glow: rgba(61,220,132,0.12);
+      --text: #f0f0f0; --muted: #777;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--black); color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 48px 40px; max-width: 420px; width: 90%;
+      text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+    .icon {
+      width: 64px; height: 64px; border-radius: 16px;
+      background: var(--green-glow); border: 1px solid rgba(61,220,132,0.25);
+      display: flex; align-items: center; justify-content: center; font-size: 2rem;
+    }
+    .icon.error { background: rgba(255,80,80,0.08); border-color: rgba(255,80,80,0.25); }
+    h1 { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+    p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; max-width: 300px; }
+    .redirect-bar { width: 100%; background: #181818; border-radius: 8px; height: 4px; overflow: hidden; }
+    .redirect-fill { height: 100%; background: var(--green); border-radius: 8px; width: 0%; transition: width 3s linear; }
+    .redirect-label { font-size: 0.75rem; color: var(--muted); }
+    .btn {
+      display: inline-block; background: var(--green); color: #000;
+      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.88rem;
+      padding: 11px 28px; border-radius: 10px; text-decoration: none;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: var(--green-dim); }
+    .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--muted); }
+    .logo span { color: var(--green); }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="logo">Whims<span>Games</span></div>
+    <div class="icon" id="icon">⏳</div>
+    <h1 id="title">Verifying…</h1>
+    <p id="msg">Confirming your email, hang on a sec.</p>
+  </div>
+
+  <script>
+    const SUPA_URL = 'https://rjrnqiklifurcqzvavtt.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcm5xaWtsaWZ1cmNxenZhdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5OTY3MDAsImV4cCI6MjA1NjU3MjcwMH0.M0bMwFnEb0K5sMpX_bTtJmCfJUHRcNvqJK0aVLy8A5E';
+
+    function showError(msg) {
+      document.getElementById('icon').textContent = '✖';
+      document.getElementById('icon').classList.add('error');
+      document.getElementById('title').textContent = 'Verification failed';
+      document.getElementById('msg').textContent = msg;
+      const btn = document.createElement('a');
+      btn.href = 'index.html'; btn.className = 'btn'; btn.textContent = '← Back to Home';
+      document.getElementById('card').appendChild(btn);
+    }
+
+    function showSuccess(username) {
+      document.getElementById('icon').textContent = '✓';
+      document.getElementById('title').textContent = 'Email verified!';
+      document.getElementById('msg').textContent =
+        'Welcome' + (username ? ', ' + username : '') + '! Your account is ready. Taking you home…';
+
+      const card = document.getElementById('card');
+
+      const label = document.createElement('div');
+      label.className = 'redirect-label';
+      label.textContent = 'Redirecting in 3 seconds…';
+      card.appendChild(label);
+
+      const bar = document.createElement('div');
+      bar.className = 'redirect-bar';
+      bar.innerHTML = '<div class="redirect-fill" id="fill"></div>';
+      card.appendChild(bar);
+
+      const btn = document.createElement('a');
+      btn.href = 'index.html'; btn.className = 'btn'; btn.textContent = '▶ Go Now';
+      card.appendChild(btn);
+
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.getElementById('fill').style.width = '100%';
+      }));
+      setTimeout(() => { window.location.href = 'index.html'; }, 3000);
+    }
+
+    async function verify() {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const access_token  = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+
+      if (!access_token || !refresh_token) {
+        showError('No verification token found. The link may have expired or already been used.');
+        return;
+      }
+
+      try {
+        // Exchange refresh token to get a fresh session
+        const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: { 'apikey': SUPA_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token })
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          showError(data.error_description || data.error || 'Verification failed. Try signing in manually.');
+          return;
+        }
+
+        // Write session into localStorage so Supabase JS client picks it up automatically
+        const sessionKey = 'sb-rjrnqiklifurcqzvavtt-auth-token';
+        localStorage.setItem(sessionKey, JSON.stringify({
+          access_token:  data.access_token,
+          refresh_token: data.refresh_token,
+          expires_at:    Math.floor(Date.now() / 1000) + data.expires_in,
+          expires_in:    data.expires_in,
+          token_type:    'bearer',
+          user:          data.user
+        }));
+
+        const username = data.user?.user_metadata?.username
+          || data.user?.user_metadata?.display_name
+          || '';
+        showSuccess(username);
+
+      } catch (err) {
+        showError('Something went wrong: ' + err.message);
+      }
+    }
+
+    verify();
+  </script>
+</body>
+</html>

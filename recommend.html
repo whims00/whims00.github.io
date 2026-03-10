@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <script src="auth.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suggest a Game — Whims Games</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black:#080808;--s1:#111;--s2:#181818;--s3:#1e1e1e;
+      --border:#222;--border2:#2a2a2a;
+      --green:#3ddc84;--green-dim:#2ab86a;--green-glow:rgba(61,220,132,.1);
+      --text:#f0f0f0;--muted:#666;--muted2:#888;
+      --gold:#f5c542;--accent:#ff3f3f;
+      --mono:'DM Mono',monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{min-height:100%;background:var(--black);}
+    body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+    /* ── NAV ── */
+    .nav{position:sticky;top:0;z-index:100;background:rgba(8,8,8,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 28px;height:52px;display:flex;align-items:center;justify-content:space-between;}
+    .logo{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:900;text-decoration:none;color:var(--text);letter-spacing:-.01em;}
+    .logo em{color:var(--green);font-style:normal;}
+    .nav-right{display:flex;align-items:center;gap:10px;}
+
+    /* ── HERO ── */
+    .hero{padding:60px 28px 0;max-width:900px;margin:0 auto;text-align:center;}
+    .hero-tag{display:inline-block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--green);background:var(--green-glow);border:1px solid rgba(61,220,132,.2);padding:5px 14px;border-radius:20px;margin-bottom:20px;}
+    .hero h1{font-family:'Syne',sans-serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:900;line-height:1.08;letter-spacing:-.02em;margin-bottom:14px;}
+    .hero h1 em{color:var(--green);font-style:normal;}
+    .hero p{color:var(--muted2);font-size:1rem;line-height:1.6;max-width:520px;margin:0 auto 36px;}
+
+    /* ── SUBMIT CARD ── */
+    .submit-wrap{max-width:640px;margin:0 auto;padding:0 28px 20px;}
+    .submit-card{background:var(--s1);border:1px solid var(--border2);border-radius:18px;padding:28px 28px 24px;display:flex;flex-direction:column;gap:18px;}
+    .sc-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;display:flex;align-items:center;gap:8px;}
+    .form-row{display:flex;flex-direction:column;gap:6px;}
+    .form-row label{font-size:.72rem;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.07em;}
+    .form-input,.form-textarea,.form-select{background:var(--s2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;padding:11px 14px;outline:none;transition:border-color .15s;width:100%;}
+    .form-input:focus,.form-textarea:focus,.form-select:focus{border-color:rgba(61,220,132,.4);}
+    .form-textarea{resize:vertical;min-height:80px;line-height:1.5;}
+    .form-select{cursor:pointer;}
+    .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .submit-btn{background:var(--green);color:#000;border:none;border-radius:11px;padding:13px 24px;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px;justify-content:center;}
+    .submit-btn:hover{background:var(--green-dim);transform:translateY(-1px);}
+    .success-msg{display:none;background:rgba(61,220,132,.08);border:1px solid rgba(61,220,132,.25);border-radius:11px;padding:14px 18px;color:var(--green);font-size:.85rem;font-weight:600;text-align:center;}
+    .success-msg.on{display:block;}
+
+    /* ── MAIN CONTENT ── */
+    .content{max-width:900px;margin:40px auto 0;padding:0 28px 80px;}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+    .section-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;display:flex;align-items:center;gap:8px;}
+    .count-badge{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:.7rem;font-weight:700;color:var(--muted2);font-family:var(--mono);}
+
+    /* Filter tabs — categories only, no status */
+    .filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+    .ftab{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:.75rem;font-weight:700;cursor:pointer;color:var(--muted2);transition:all .15s;font-family:'DM Sans',sans-serif;}
+    .ftab:hover,.ftab.on{background:var(--green-glow);border-color:rgba(61,220,132,.3);color:var(--green);}
+
+    /* ── SUGGESTION CARDS ── */
+    .suggestions{display:flex;flex-direction:column;gap:12px;}
+    .sug-card{background:var(--s1);border:1px solid var(--border2);border-radius:14px;padding:20px 22px;transition:border-color .15s;}
+    .sug-card.pinned{border-color:rgba(245,197,66,.3);background:rgba(245,197,66,.03);}
+    .sug-top{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+    .sug-name{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;}
+    .sug-cat{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:20px;}
+    .sug-cat.game{background:var(--green-glow);border:1px solid rgba(61,220,132,.2);color:var(--green);}
+    .sug-cat.bug{background:rgba(255,63,63,.07);border:1px solid rgba(255,63,63,.2);color:var(--accent);}
+    .sug-cat.general{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--muted2);}
+    .sug-cat.question{background:rgba(245,197,66,.07);border:1px solid rgba(245,197,66,.2);color:var(--gold);}
+    .sug-desc{font-size:.83rem;color:var(--muted2);line-height:1.5;margin-bottom:10px;}
+    .sug-url{font-size:.72rem;color:var(--muted);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:10px;}
+    .sug-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .sug-author{font-size:.72rem;color:var(--muted);}
+    .sug-date{font-size:.7rem;color:var(--muted);font-family:var(--mono);}
+
+    /* Comments — only visible to submitter + owner */
+    .comments{margin-top:14px;display:flex;flex-direction:column;gap:8px;}
+    .comment{background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;display:flex;gap:10px;}
+    .comment.owner-comment{border-color:rgba(61,220,132,.25);background:rgba(61,220,132,.04);}
+    .comment-avatar{width:24px;height:24px;border-radius:50%;flex-shrink:0;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:var(--green);}
+    .comment-author{font-size:.72rem;font-weight:700;display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+    .owner-badge{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;background:var(--green-glow);border:1px solid rgba(61,220,132,.3);color:var(--green);padding:1px 7px;border-radius:10px;}
+    .comment-text{font-size:.8rem;color:var(--muted2);line-height:1.45;}
+    .comment-input-row{display:flex;gap:8px;margin-top:10px;}
+    .comment-input{flex:1;background:var(--s3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.8rem;padding:8px 12px;outline:none;transition:border-color .15s;}
+    .comment-input:focus{border-color:rgba(61,220,132,.3);}
+    .comment-send{background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--muted2);font-size:.78rem;font-weight:600;padding:8px 14px;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+    .comment-send:hover{border-color:rgba(61,220,132,.35);color:var(--green);}
+
+    /* ── ADMIN PANEL ── */
+    .admin-panel{background:rgba(61,220,132,.03);border:1px solid rgba(61,220,132,.15);border-radius:12px;padding:14px 16px;margin-top:14px;}
+    .admin-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin-bottom:12px;}
+    .admin-actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .adm-btn{font-size:.75rem;font-weight:700;font-family:'DM Sans',sans-serif;padding:7px 14px;border-radius:8px;cursor:pointer;border:1px solid;transition:all .15s;}
+    .adm-pin{background:rgba(245,197,66,.06);border-color:rgba(245,197,66,.25);color:var(--gold);}
+    .adm-pin:hover{background:rgba(245,197,66,.12);}
+    .adm-delete{background:rgba(255,63,63,.04);border-color:rgba(255,63,63,.15);color:#ff6666;}
+    .adm-delete:hover{background:rgba(255,63,63,.1);}
+
+    /* Empty state */
+    .empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:.9rem;}
+    .empty-ico{font-size:2.5rem;margin-bottom:12px;}
+
+    /* Toast */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--s1);border:1px solid var(--border2);border-radius:12px;padding:12px 22px;font-size:.82rem;font-weight:600;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;}
+    .toast.on{opacity:1;}
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="index.html">Whims<em>Games</em></a>
+  <div class="nav-right" id="headerNav"></div>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">Community Board</div>
+  <h1>Suggest a <em>Game</em></h1>
+  <p>Got a game you want added? Drop a suggestion — the owner reads every single one.</p>
+</div>
+
+<!-- SUBMIT FORM -->
+<div class="submit-wrap">
+  <div class="submit-card">
+    <div class="sc-title">✏️ New Submission</div>
+    <div class="form-row-2">
+      <div class="form-row">
+        <label>Title *</label>
+        <input class="form-input" id="f-name" placeholder="e.g. Bloons TD 6" maxlength="60">
+      </div>
+      <div class="form-row">
+        <label>Category</label>
+        <select class="form-select" id="f-cat">
+          <option value="game">🎮 Game</option>
+          <option value="bug">🐛 Bug</option>
+          <option value="general">💬 General</option>
+          <option value="question">❓ Question</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Details</label>
+      <textarea class="form-textarea" id="f-reason" placeholder="Describe it…" maxlength="300"></textarea>
+    </div>
+    <div class="form-row">
+      <label>URL (optional)</label>
+      <input class="form-input" id="f-url" placeholder="https://…" type="url">
+    </div>
+    <button class="submit-btn" onclick="submitSuggestion()">
+      <span>🚀</span> Submit
+    </button>
+    <div class="success-msg" id="successMsg">✓ Submitted! The owner will review it.</div>
+  </div>
+</div>
+
+<!-- LIST -->
+<div class="content">
+  <div class="section-head">
+    <div class="section-title">📋 Submissions <span class="count-badge" id="totalCount">0</span></div>
+  </div>
+  <div class="filter-tabs">
+    <button class="ftab on" onclick="setFilter('all',this)">All</button>
+    <button class="ftab" onclick="setFilter('game',this)">🎮 Game</button>
+    <button class="ftab" onclick="setFilter('bug',this)">🐛 Bug</button>
+    <button class="ftab" onclick="setFilter('general',this)">💬 General</button>
+    <button class="ftab" onclick="setFilter('question',this)">❓ Question</button>
+  </div>
+  <div class="suggestions" id="sugList"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://rjrnqiklifurcqzvavtt.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcm5xaWtsaWZ1cmNxenZhdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5OTY3MDAsImV4cCI6MjA1NjU3MjcwMH0.M0bMwFnEb0K5sMpX_bTtJmCfJUHRcNvqJK0aVLy8A5E';
+const OWNER_ID = '078faf99-dbb4-4ec1-a874-99750cefdb18';
+
+let sb = null, currentUser = null, currentProfile = null;
+let suggestions = [];
+let activeFilter = 'all';
+
+async function init() {
+  sb = await loadSupabase();
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    const { data: p } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    currentProfile = p;
+  }
+  if (window.injectAuthNav) injectAuthNav(document.getElementById('headerNav'));
+  await loadSuggestions();
+  sb.channel('recommendations')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'recommendations' }, () => loadSuggestions())
+    .subscribe();
+}
+
+async function loadSuggestions() {
+  // Owner sees all; logged-in users see own; anonymous see none with comments
+  const { data, error } = await sb.from('recommendations')
+    .select('*, recommendation_comments(id, content, user_id, created_at, profiles(username,display_name))')
+    .order('pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return; }
+
+  const isOwner = currentUser?.id === OWNER_ID;
+
+  // Filter what the current user can see:
+  // Owner sees everything. Others see only their own submissions.
+  suggestions = (data || []).filter(s => isOwner || s.user_id === currentUser?.id);
+
+  document.getElementById('totalCount').textContent = suggestions.length;
+  renderSuggestions();
+}
+
+function setFilter(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  renderSuggestions();
+}
+
+function renderSuggestions() {
+  const list = document.getElementById('sugList');
+  let filtered = suggestions;
+  if (activeFilter !== 'all') filtered = suggestions.filter(s => s.category === activeFilter);
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-ico">🗂️</div>${
+      currentUser ? 'Nothing here yet.' : 'Sign in to see your submissions.'
+    }</div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  filtered.forEach(s => list.appendChild(buildCard(s)));
+}
+
+function buildCard(s) {
+  const isOwner = currentUser?.id === OWNER_ID;
+  const isMine  = currentUser?.id === s.user_id;
+  const catLabel = { game:'🎮 Game', bug:'🐛 Bug', general:'💬 General', question:'❓ Question' }[s.category] || s.category;
+  const timeAgo  = fmtTime(s.created_at);
+
+  const div = document.createElement('div');
+  div.className = 'sug-card' + (s.pinned ? ' pinned' : '');
+  div.id = 'sug-' + s.id;
+
+  // Comments — visible to owner always, and to the submitter for their own post
+  const canSeeComments = isOwner || isMine;
+  const commentsHTML = canSeeComments
+    ? (s.recommendation_comments || []).map(c => {
+        const name = c.profiles?.display_name || c.profiles?.username || 'User';
+        const isOwnerComment = c.user_id === OWNER_ID;
+        return `<div class="comment ${isOwnerComment ? 'owner-comment' : ''}">
+          <div class="comment-avatar">${name[0].toUpperCase()}</div>
+          <div>
+            <div class="comment-author">${escHtml(name)}${isOwnerComment ? '<span class="owner-badge">Owner</span>' : ''}</div>
+            <div class="comment-text">${escHtml(c.content)}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : '';
+
+  // Comment input — owner can comment on anything, submitter can comment on own
+  const commentInput = (isOwner || isMine) && currentUser ? `
+    <div class="comment-input-row">
+      <input class="comment-input" id="ci-${s.id}" placeholder="${isOwner && !isMine ? 'Reply to this submission…' : 'Add a comment…'}" maxlength="300">
+      <button class="comment-send" onclick="postComment('${s.id}')">Send</button>
+    </div>` : '';
+
+  // Admin panel — owner only, no status buttons, just pin + delete
+  const adminHTML = isOwner ? `
+    <div class="admin-panel">
+      <div class="admin-title">⚡ Admin</div>
+      <div class="admin-actions">
+        <button class="adm-btn adm-pin" onclick="togglePin('${s.id}',${s.pinned})">📌 ${s.pinned ? 'Unpin' : 'Pin'}</button>
+        <button class="adm-btn adm-delete" onclick="deleteSug('${s.id}')">🗑 Delete</button>
+      </div>
+    </div>` : '';
+
+  const urlHTML = s.url ? `<div class="sug-url">🔗 ${escHtml(s.url)}</div>` : '';
+
+  div.innerHTML = `
+    <div class="sug-top">
+      <span class="sug-name">${s.pinned ? '📌 ' : ''}${escHtml(s.title)}</span>
+      <span class="sug-cat ${s.category}">${catLabel}</span>
+    </div>
+    ${s.description ? `<div class="sug-desc">${escHtml(s.description)}</div>` : ''}
+    ${urlHTML}
+    <div class="sug-meta">
+      <span class="sug-author">By ${escHtml(s.author_name || 'Anonymous')}</span>
+      <span class="sug-date">${timeAgo}</span>
+    </div>
+    ${canSeeComments && commentsHTML ? `<div class="comments">${commentsHTML}</div>` : ''}
+    ${commentInput}
+    ${adminHTML}`;
+
+  return div;
+}
+
+async function submitSuggestion() {
+  const name = document.getElementById('f-name').value.trim();
+  const reason = document.getElementById('f-reason').value.trim();
+  const url = document.getElementById('f-url').value.trim();
+  const cat = document.getElementById('f-cat').value;
+  if (!name) { toast('Please enter a title'); return; }
+  const authorName = currentProfile?.display_name || currentProfile?.username || (currentUser ? 'User' : 'Anonymous');
+  const { error } = await sb.from('recommendations').insert({
+    title: name, description: reason || null, url: url || null,
+    category: cat, pinned: false,
+    user_id: currentUser?.id || null, author_name: authorName
+  });
+  if (error) { toast('Error: ' + error.message); return; }
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-reason').value = '';
+  document.getElementById('f-url').value = '';
+  document.getElementById('successMsg').classList.add('on');
+  setTimeout(() => document.getElementById('successMsg').classList.remove('on'), 4000);
+  toast('🚀 Submitted!');
+  await loadSuggestions();
+}
+
+async function togglePin(id, pinned) {
+  await sb.from('recommendations').update({ pinned: !pinned }).eq('id', id);
+  toast(pinned ? 'Unpinned' : '📌 Pinned');
+  await loadSuggestions();
+}
+
+async function deleteSug(id) {
+  if (!confirm('Delete this submission?')) return;
+  await sb.from('recommendations').delete().eq('id', id);
+  toast('Deleted');
+  await loadSuggestions();
+}
+
+async function postComment(sugId) {
+  if (!currentUser) { toast('Sign in to comment'); return; }
+  const input = document.getElementById('ci-' + sugId);
+  const text = input?.value.trim();
+  if (!text) return;
+  const { error } = await sb.from('recommendation_comments').insert({
+    recommendation_id: sugId, user_id: currentUser.id, content: text
+  });
+  if (error) { toast('Error: ' + error.message); return; }
+  if (input) input.value = '';
+  await loadSuggestions();
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtTime(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), 2800);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <script src="auth.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Play Stickman Hook — Whims Games</title>
+  <title>Play Subway Surfers — Whims Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -62,7 +62,7 @@
 <body>
   <div class="main" id="mainContainer">
     <div class="game-wrapper">
-      <iframe id="gameFrame" src="https://math711.github.io/g5/class-406" allowfullscreen allow="autoplay; fullscreen"></iframe>
+      <iframe id="gameFrame" src="https://3kh0s.github.io/games/subwaysurfers/" allowfullscreen allow="autoplay; fullscreen"></iframe>
       <div class="stats-bar">
         <div class="stat-pill"><span class="dot"></span><span id="playerCount">— playing</span></div>
         <div class="stat-pill">⏱ <span id="sessionTime">0:00</span></div>
@@ -70,8 +70,8 @@
     </div>
     <div class="game-bar">
       <div class="game-bar-left">
-        <span class="game-title">Stickman Hook</span>
-        <div class="tags"><span class="tag">platformer</span><span class="tag">action</span></div>
+        <span class="game-title">Subway Surfers</span>
+        <div class="tags"><span class="tag">endless</span><span class="tag">action</span></div>
       </div>
       <div class="bar-btns">
         <button class="btn-fav" id="favBtn" onclick="toggleFav()">☆ Favourite</button>
@@ -108,7 +108,7 @@
   <script src="tracking.js"></script>
   <script src="games.js"></script>
   <script>
-    const GAME_ID='StickmanHook';const GAME_TITLE='Stickman Hook';
+    const GAME_ID='SubwaySurfers';const GAME_TITLE='Subway Surfers';
     let sessionSec=0;
     function fmt(s){const m=Math.floor(s/60);return m+':'+(s%60<10?'0':'')+s%60;}
     setInterval(()=>{sessionSec++;document.getElementById('sessionTime').textContent=fmt(sessionSec);document.getElementById('st-time').textContent=fmt(sessionSec);},1000);

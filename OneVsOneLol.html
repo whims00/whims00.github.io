@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <script src="auth.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Play 1v1.lol — Whims Games</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{--black:#080808;--surface:#111;--surface2:#181818;--border:#222;--green:#3ddc84;--green-dim:#2ab86a;--text:#f0f0f0;--muted:#777;--gold:#f5c542;}
+    *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;overflow:hidden;}
+    body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;}
+    .main{flex:1 1 0;min-width:0;display:flex;flex-direction:column;height:100vh;padding:12px;gap:10px;overflow:hidden;}
+    .game-wrapper{flex:1 1 0;min-height:0;position:relative;background:#000;border-radius:12px;border:1px solid var(--border);overflow:hidden;}
+    .game-wrapper iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+    .stats-bar{position:absolute;top:10px;left:10px;display:flex;gap:8px;z-index:10;pointer-events:none;}
+    .stat-pill{background:rgba(8,8,8,.85);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px);border-radius:20px;padding:5px 12px;font-size:.7rem;font-weight:600;display:flex;align-items:center;gap:5px;}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .game-bar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;flex-shrink:0;gap:10px;}
+    .game-bar-left{display:flex;align-items:center;gap:10px;}
+    .game-title{font-family:'Syne',sans-serif;font-size:.92rem;font-weight:800;}
+    .tags{display:flex;gap:5px;}
+    .tag{font-size:.6rem;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:20px;background:rgba(61,220,132,.08);border:1px solid rgba(61,220,132,.18);color:var(--green);}
+    .bar-btns{display:flex;gap:8px;}
+    .btn-fs{background:var(--green);color:#000;border:none;padding:7px 16px;font-size:.8rem;font-family:'DM Sans',sans-serif;font-weight:700;border-radius:8px;cursor:pointer;transition:all .15s;}
+    .btn-fs:hover{background:var(--green-dim);}
+    .btn-fav{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:7px 12px;font-size:.8rem;font-family:'DM Sans',sans-serif;font-weight:600;border-radius:8px;cursor:pointer;transition:all .15s;}
+    .btn-fav:hover,.btn-fav.on{border-color:var(--gold);color:var(--gold);}
+    .btn-fav.on{background:rgba(245,197,66,.08);}
+    .sidebar{width:252px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;height:100vh;}
+    .sidebar::-webkit-scrollbar{width:3px;}
+    .sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+    .back-btn{display:inline-flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);color:var(--text);text-decoration:none;font-weight:600;font-size:.8rem;padding:8px 14px;border-radius:9px;transition:all .15s;}
+    .back-btn:hover{border-color:rgba(61,220,132,.4);}
+    .sidebar-label{font-family:'Syne',sans-serif;font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;}
+    .session-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;overflow:hidden;}
+    .session-title{font-family:'Syne',sans-serif;font-size:.72rem;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.06em;}
+    .session-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+    .ss{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:7px 8px;overflow:hidden;}
+    .ss-val{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:800;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .ss-lab{font-size:.58rem;color:var(--muted);font-weight:600;text-transform:uppercase;margin-top:2px;white-space:nowrap;}
+    .divider{height:1px;background:var(--border);}
+    .rating-row{display:flex;align-items:center;gap:5px;}
+    .star{font-size:1.1rem;cursor:pointer;color:var(--border);user-select:none;transition:color .1s;}
+    .star.lit{color:var(--gold);}
+    .rating-label{font-size:.68rem;color:var(--muted);}
+    .game-card{display:block;text-decoration:none;color:inherit;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:transform .18s,border-color .18s;}
+    .game-card:hover{transform:translateY(-2px);border-color:rgba(61,220,132,.28);}
+    .game-card img{width:100%;height:88px;object-fit:cover;display:block;background:#111;}
+    .card-info{padding:8px 10px 10px;}
+    .card-info h3{font-family:'Syne',sans-serif;font-size:.78rem;font-weight:800;margin-bottom:3px;}
+    .card-info p{font-size:.68rem;color:var(--muted);line-height:1.4;}
+  </style>
+</head>
+<body>
+  <div class="main" id="mainContainer">
+    <div class="game-wrapper">
+      <iframe src="https://3kh0s.github.io/games/1v1lol/index.html" allowfullscreen allow="autoplay; fullscreen"></iframe>
+      <div class="stats-bar">
+        <div class="stat-pill"><span class="dot"></span><span id="playerCount">— playing</span></div>
+        <div class="stat-pill">⏱ <span id="sessionTime">0:00</span></div>
+      </div>
+    </div>
+    <div class="game-bar">
+      <div class="game-bar-left">
+        <span class="game-title">1v1.lol</span>
+        <div class="tags"><span class="tag">fps</span><span class="tag">action</span><span class="tag">3d</span></div>
+      </div>
+      <div class="bar-btns">
+        <button class="btn-fav" id="favBtn" onclick="toggleFav()">☆ Favourite</button>
+        <button class="btn-fs" onclick="goFullscreen()">⛶ Fullscreen</button>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div id="headerNav" style="margin-bottom:2px"></div>
+    <a href="index.html" class="back-btn">← Home</a>
+    <div class="session-card">
+      <div class="session-title">📊 Session</div>
+      <div class="session-stats">
+        <div class="ss"><div class="ss-val" id="st-time">0:00</div><div class="ss-lab">Time Played</div></div>
+        <div class="ss"><div class="ss-val" id="st-visits">—</div><div class="ss-lab">Your Visits</div></div>
+        <div class="ss"><div class="ss-val" id="st-total">0</div><div class="ss-lab">Total Plays</div></div>
+        <div class="ss"><div class="ss-val" id="st-rank">—</div><div class="ss-lab">Popularity</div></div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Rate</div>
+      <div class="rating-row">
+        <span class="star" data-v="1" onclick="rateGame(1)">★</span>
+        <span class="star" data-v="2" onclick="rateGame(2)">★</span>
+        <span class="star" data-v="3" onclick="rateGame(3)">★</span>
+        <span class="star" data-v="4" onclick="rateGame(4)">★</span>
+        <span class="star" data-v="5" onclick="rateGame(5)">★</span>
+        <span class="rating-label" id="ratingLabel">Not rated</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="sidebar-label">More Games</div>
+    <div id="random-games"></div>
+  </div>
+  <script src="tracking.js"></script>
+  <script src="games.js"></script>
+  <script>
+    const GAME_ID='OneVsOneLol',GAME_TITLE='1v1.lol';
+    let sessionSec=0;
+    function fmt(s){const m=Math.floor(s/60);return m+':'+(s%60<10?'0':'')+s%60;}
+    setInterval(()=>{sessionSec++;['sessionTime','st-time'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=fmt(sessionSec);});},1000);
+    function updateCount(){let c=0;try{c=typeof getPageCount==='function'?getPageCount(GAME_ID):0;}catch(e){}document.getElementById('playerCount').textContent=c>0?(c+' playing'):'— playing';document.getElementById('st-total').textContent=c>0?String(c):'0';}
+    updateCount();setInterval(updateCount,5000);
+    const visits=(+localStorage.getItem('wg_visits_'+GAME_ID)||0)+1;localStorage.setItem('wg_visits_'+GAME_ID,visits);document.getElementById('st-visits').textContent=visits;
+    function updateRank(){let myV=+localStorage.getItem('wg_visits_'+GAME_ID)||0,rank=1;if(typeof gamesList!=='undefined')gamesList.forEach(g=>{const v=+localStorage.getItem('wg_visits_'+g.link.replace('.html',''))||0;if(v>myV)rank++;});document.getElementById('st-rank').textContent='#'+rank;}
+    if(typeof gamesList!=='undefined')updateRank();else window.addEventListener('load',updateRank);
+    function updateFavBtn(){const on=localStorage.getItem('wg_fav_'+GAME_ID)==='1';const b=document.getElementById('favBtn');b.textContent=on?'★ Favourited':'☆ Favourite';b.classList.toggle('on',on);}
+    function toggleFav(){localStorage.setItem('wg_fav_'+GAME_ID,localStorage.getItem('wg_fav_'+GAME_ID)==='1'?'0':'1');updateFavBtn();}
+    updateFavBtn();
+    function rateGame(v){localStorage.setItem('wg_rate_'+GAME_ID,v);document.querySelectorAll('.star').forEach(s=>s.classList.toggle('lit',+s.dataset.v<=v));document.getElementById('ratingLabel').textContent=['','Poor','OK','Good','Great','Amazing'][v];}
+    const sr=+localStorage.getItem('wg_rate_'+GAME_ID)||0;if(sr)rateGame(sr);
+    function buildSidebar(){const c=document.getElementById('random-games');if(!c||typeof gamesList==='undefined')return;gamesList.filter(g=>g.title!==GAME_TITLE).sort(()=>.5-Math.random()).slice(0,7).forEach(g=>{const a=document.createElement('a');a.href=g.link;a.className='game-card';a.innerHTML=`<img src="${g.img}" onerror="this.style.background='#1a1a1a'"><div class="card-info"><h3>${g.title}</h3><p>${g.desc}</p></div>`;c.appendChild(a);});}
+    if(typeof gamesList!=='undefined')buildSidebar();else window.addEventListener('load',buildSidebar);
+    function goFullscreen(){const c=document.getElementById('mainContainer');document.fullscreenElement?document.exitFullscreen():c.requestFullscreen().catch(()=>{});}
+    if(window.injectAuthNav)injectAuthNav(document.getElementById('headerNav'));
+    if(window.initGlobalKeybinds)initGlobalKeybinds(()=>{window.location.href='tools.html';},null);
+    if(window.trackPage)trackPage(GAME_ID);
+    if(window.checkFunnyMode)checkFunnyMode();
+  </script>
+</body>
+</html>
+<!-- PLEASE WORK -->

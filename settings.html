@@ -142,12 +142,15 @@
     .toggle-wrap input:checked + .toggle-slider::after { background: var(--green); transform: translateX(20px); }
   </style>
   <script src="tracking.js"></script>
+  <script src="auth.js"></script>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
 </head>
 <body>
 
   <header>
-    <div class="header-title">Educational <span>Tools</span> — Settings</div>
-    <a href="tools.html" class="back-btn">← Tools</a>
+    <a href="index.html" style="display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:600;padding:6px 12px;border-radius:9px;text-decoration:none;transition:all 0.15s;" onmouseover="this.style.borderColor='rgba(61,220,132,0.35)';this.style.color='#f0f0f0'" onmouseout="this.style.borderColor='#222';this.style.color='#666'">← Home</a>
+    <div class="header-title">Whims <span>Games</span> — Settings</div>
+    <div id="headerNav"></div>
   </header>
 
   <div class="page-hero">
@@ -156,6 +159,19 @@
   </div>
 
   <div class="settings-content">
+
+    <div class="settings-section">
+      <div class="section-label">Account</div>
+      <div class="kb-card">
+        <div class="kb-card-header">
+          <div class="kb-card-info">
+            <h3>Your Profile</h3>
+            <p>Edit your display name, username, bio and profile picture.</p>
+          </div>
+          <a href="profile.html" style="flex-shrink:0;background:var(--green);color:#000;font-family:'DM Sans',sans-serif;font-size:0.78rem;font-weight:700;padding:8px 14px;border-radius:8px;text-decoration:none;transition:background 0.15s;" onmouseover="this.style.background='#2ab86a'" onmouseout="this.style.background='#3ddc84'">Edit Profile →</a>
+        </div>
+      </div>
+    </div>
 
     <div class="settings-section">
       <div class="section-label">Shortcuts</div>
@@ -245,7 +261,7 @@
   <script>
     // Funny mode
     checkFunnyMode();
-    injectSettingsBtn();
+    injectAuthNav(document.getElementById('headerNav'));
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('funnyToggle').checked = localStorage.getItem('wg_funny') === 'true';
     });

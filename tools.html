@@ -7,6 +7,7 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="tracking.js"></script>
+  <script src="auth.js"></script>
   <style>
     :root {
       --black: #080808; --surface: #111111; --surface2: #181818;
@@ -147,6 +148,7 @@
 
   <header>
     <div class="header-title">Educational <span>Tools</span></div>
+    <div id="headerNav"></div>
   </header>
 
   <div class="page-hero">
@@ -343,9 +345,12 @@
 
   <script>
     trackPage('tools');
+    injectAuthNav(document.getElementById('headerNav'));
     checkFunnyMode();
-    injectSettingsBtn();
-    initGlobalKeybinds(null, () => history.back());
+    initGlobalKeybinds(
+      () => { /* already on tools */ window.scrollTo({top:0,behavior:'smooth'}); },
+      () => { window.location.href = 'index.html'; }
+    );
 
     // ── CALCULATOR ──
     let cExpr = '', cDisp = '0', cEvaled = false;

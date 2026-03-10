@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Whims Games</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -16,6 +17,7 @@
       --green-glow: rgba(61, 220, 132, 0.12);
       --text: #f0f0f0;
       --muted: #777;
+      --gold: #f5c542;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -50,19 +52,7 @@
 
     .logo span { color: var(--green); }
 
-    .header-pill {
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: var(--green);
-      background: var(--green-glow);
-      border: 1px solid rgba(61,220,132,0.25);
-      padding: 5px 14px;
-      border-radius: 20px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .hero {
+.hero {
       padding: 72px 40px 52px;
       position: relative;
       overflow: hidden;
@@ -122,9 +112,7 @@
       50% { opacity: 0.3; }
     }
 
-    #player-count {
-      transition: opacity 0.3s;
-    }
+    #player-count { transition: opacity 0.3s; }
 
     .hero h1 {
       font-family: 'Syne', sans-serif;
@@ -135,10 +123,7 @@
       max-width: 720px;
     }
 
-    .hero h1 em {
-      font-style: normal;
-      color: var(--green);
-    }
+    .hero h1 em { font-style: normal; color: var(--green); }
 
     .hero p {
       margin-top: 18px;
@@ -148,6 +133,82 @@
       line-height: 1.65;
     }
 
+    /* ── PERSONALISED ROWS ── */
+    .personal-section { padding: 32px 40px 0; }
+
+    .section-row-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .section-row-header h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .scroll-row {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: none;
+    }
+    .scroll-row::-webkit-scrollbar { display: none; }
+
+    .small-card {
+      flex-shrink: 0;
+      width: 220px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform 0.22s ease, border-color 0.22s, box-shadow 0.22s;
+    }
+    .small-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(61,220,132,0.35);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(61,220,132,0.08);
+    }
+    .small-card img { width: 100%; height: 130px; object-fit: cover; display: block; background: var(--surface2); }
+    .small-card-body { padding: 12px 14px 14px; }
+    .small-card-title { font-family: 'Syne', sans-serif; font-size: 0.88rem; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .small-card-sub { font-size: 0.76rem; color: var(--muted); line-height: 1.4; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sc-badge { display: inline-block; font-size: 0.63rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; margin-bottom: 8px; }
+    .sc-badge.gold { background: rgba(245,197,66,0.1); border: 1px solid rgba(245,197,66,0.25); color: var(--gold); }
+    .sc-badge.green { background: var(--green-glow); border: 1px solid rgba(61,220,132,0.2); color: var(--green); }
+    .small-card .play-btn { font-size: 0.75rem; padding: 6px 12px; }
+
+    /* ── SUGGEST BANNER ── */
+    .suggest-banner {
+      margin: 32px 40px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .suggest-banner-title { font-family: 'Syne', sans-serif; font-size: 0.92rem; font-weight: 800; margin-bottom: 3px; }
+    .suggest-banner-sub { font-size: 0.78rem; color: var(--muted); }
+    .suggest-link {
+      background: var(--green); color: #000; border: none;
+      font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 700;
+      padding: 9px 20px; border-radius: 9px; cursor: pointer;
+      text-decoration: none; display: inline-block; white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .suggest-link:hover { background: var(--green-dim); }
+
+    /* ── SEARCH ── */
     .search-wrap {
       padding: 0 40px;
       margin-top: 36px;
@@ -187,7 +248,6 @@
       pointer-events: none;
     }
 
-    /* TAG FILTERS */
     .tag-wrap {
       padding: 14px 40px 0;
       display: flex;
@@ -211,16 +271,8 @@
       transition: background 0.15s, border-color 0.15s, color 0.15s;
     }
 
-    .tag-btn:hover {
-      border-color: rgba(61,220,132,0.4);
-      color: var(--text);
-    }
-
-    .tag-btn.active {
-      background: var(--green);
-      border-color: var(--green);
-      color: #000;
-    }
+    .tag-btn:hover { border-color: rgba(61,220,132,0.4); color: var(--text); }
+    .tag-btn.active { background: var(--green); border-color: var(--green); color: #000; }
 
     .section-bar {
       display: flex;
@@ -278,13 +330,9 @@
       transition: filter 0.22s;
     }
 
-    .game-card:hover .card-thumb {
-      filter: brightness(1.05);
-    }
+    .game-card:hover .card-thumb { filter: brightness(1.05); }
 
-    .card-body {
-      padding: 14px 16px 16px;
-    }
+    .card-body { padding: 14px 16px 16px; }
 
     .card-title {
       font-family: 'Syne', sans-serif;
@@ -293,19 +341,9 @@
       margin-bottom: 5px;
     }
 
-    .card-desc {
-      font-size: 0.8rem;
-      color: var(--muted);
-      line-height: 1.5;
-      margin-bottom: 10px;
-    }
+    .card-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
 
-    .card-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-bottom: 12px;
-    }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
 
     .card-tag {
       font-size: 0.68rem;
@@ -331,10 +369,7 @@
       transition: background 0.2s, transform 0.15s;
     }
 
-    .game-card:hover .play-btn {
-      background: var(--green-dim);
-      transform: scale(1.03);
-    }
+    .game-card:hover .play-btn { background: var(--green-dim); transform: scale(1.03); }
 
     .no-results {
       display: none;
@@ -357,150 +392,36 @@
       font-size: 0.8rem;
     }
 
-    .footer-logo {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 0.95rem;
-      color: var(--text);
-    }
-
+    .footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.95rem; color: var(--text); }
     .footer-logo span { color: var(--green); }
+    .footer-links { display: flex; gap: 18px; }
+    .footer-links a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--green); }
 
-    /* CALCULATOR OVERLAY */
-    .calc-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(8px);
-      z-index: 999;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .calc-overlay.open {
-      display: flex;
-    }
-
-    .calc {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 24px;
-      width: 300px;
-      box-shadow: 0 32px 80px rgba(0,0,0,0.8);
-    }
-
-    .calc-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .calc-header span {
-      font-family: 'Syne', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .calc-close {
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-size: 1.2rem;
-      cursor: pointer;
-      padding: 0 4px;
-      transition: color 0.2s;
-    }
-
+    /* CALCULATOR OVERLAY — kept from original */
+    .calc-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 999; align-items: center; justify-content: center; }
+    .calc-overlay.open { display: flex; }
+    .calc { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; width: 300px; box-shadow: 0 32px 80px rgba(0,0,0,0.8); }
+    .calc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .calc-header span { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .calc-close { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 0 4px; transition: color 0.2s; }
     .calc-close:hover { color: var(--text); }
-
-    .calc-display {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      text-align: right;
-      margin-bottom: 12px;
-    }
-
-    .calc-expr {
-      font-size: 0.75rem;
-      color: var(--muted);
-      min-height: 16px;
-      margin-bottom: 4px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .calc-val {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--text);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .calc-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
-
-    .calc-btn {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 600;
-      padding: 14px 0;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, transform 0.1s;
-    }
-
-    .calc-btn:hover {
-      background: #222;
-      border-color: #333;
-    }
-
+    .calc-display { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-align: right; margin-bottom: 12px; }
+    .calc-expr { font-size: 0.75rem; color: var(--muted); min-height: 16px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .calc-val { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .calc-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; padding: 14px 0; border-radius: 10px; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.1s; }
+    .calc-btn:hover { background: #222; border-color: #333; }
     .calc-btn:active { transform: scale(0.95); }
-
-    .calc-btn.op {
-      color: var(--green);
-      border-color: rgba(61,220,132,0.2);
-    }
-
-    .calc-btn.eq {
-      background: var(--green);
-      border-color: var(--green);
-      color: #000;
-    }
-
+    .calc-btn.op { color: var(--green); border-color: rgba(61,220,132,0.2); }
+    .calc-btn.eq { background: var(--green); border-color: var(--green); color: #000; }
     .calc-btn.eq:hover { background: var(--green-dim); }
-
     .calc-btn.wide { grid-column: span 2; }
-
-    .calc-hint {
-      text-align: center;
-      font-size: 0.68rem;
-      color: #333;
-      margin-top: 14px;
-    }
+    .calc-hint { text-align: center; font-size: 0.68rem; color: #333; margin-top: 14px; }
 
     @media (max-width: 600px) {
-      header, .hero, .search-wrap, .tag-wrap, .section-bar, .game-grid, footer {
-        padding-left: 20px;
-        padding-right: 20px;
-      }
+      header, .hero, .search-wrap, .tag-wrap, .section-bar, .game-grid, footer,
+      .personal-section, .suggest-banner { padding-left: 20px; padding-right: 20px; }
     }
   </style>
 </head>
@@ -508,7 +429,7 @@
 
   <header>
     <div class="logo">Whims<span>Games</span></div>
-    <div class="header-pill">Unblocked · Free</div>
+    <div id="headerNav"></div>
   </header>
 
   <section class="hero">
@@ -520,6 +441,39 @@
     <p>A curated collection of unblocked games — play anything, anytime, no hassle.</p>
   </section>
 
+  <!-- PERSONALISED ROWS — hidden until JS populates them -->
+  <div class="personal-section" id="fav-section" style="display:none">
+    <div class="section-row-header">
+      <h2>⭐ Your Favourites</h2>
+    </div>
+    <div class="scroll-row" id="fav-row"></div>
+  </div>
+
+  <div class="personal-section" id="continue-section" style="display:none">
+    <div class="section-row-header">
+      <h2>⏱ Continue Playing</h2>
+      <span class="badge">Most visited</span>
+    </div>
+    <div class="scroll-row" id="continue-row"></div>
+  </div>
+
+  <div class="personal-section" id="rated-section" style="display:none">
+    <div class="section-row-header">
+      <h2>🌟 Top Rated</h2>
+      <span class="badge">Community picks</span>
+    </div>
+    <div class="scroll-row" id="rated-row"></div>
+  </div>
+
+  <!-- SUGGEST BANNER -->
+  <div class="suggest-banner">
+    <div>
+      <div class="suggest-banner-title">Know a game we're missing?</div>
+      <div class="suggest-banner-sub">Send a suggestion — the owner reads every one.</div>
+    </div>
+    <a href="recommend.html" class="suggest-link">💡 Suggest a Game</a>
+  </div>
+
   <div class="search-wrap">
     <div class="search-box">
       <span class="search-icon">🔍</span>
@@ -527,9 +481,7 @@
     </div>
   </div>
 
-  <div class="tag-wrap" id="tag-wrap">
-    <!-- tags injected by JS -->
-  </div>
+  <div class="tag-wrap" id="tag-wrap"></div>
 
   <div class="section-bar">
     <h2>All Games</h2>
@@ -545,59 +497,133 @@
 
   <footer>
     <div class="footer-logo">Whims<span>Games</span></div>
+    <div class="footer-links">
+      <a href="recommend.html">Suggest</a>
+      <a href="luck.html">Casino</a>
+      <a href="chess.html">Chess</a>
+    </div>
     <div>© 2025 WhimsGames</div>
   </footer>
 
+  <!-- Scripts at bottom like the original — guarantees DOM is ready -->
   <script src="tracking.js"></script>
+  <script src="auth.js"></script>
   <script src="games.js"></script>
   <script>
-    // ── LIVE PLAYER COUNT ──
-    startTotalCounter('player-count');
+    // ── PERSONALISED ROWS ──
+    function fillRow(sectionId, rowId, games, badgeCls, labelFn) {
+      if (!games.length) return;
+      document.getElementById(sectionId).style.display = 'block';
+      const row = document.getElementById(rowId);
+      games.forEach(function(g) {
+        const a = document.createElement('a');
+        a.className = 'small-card';
+        a.href = g.link;
+        if (g.external) a.target = '_blank';
+        const tagsHtml = (g.tags || []).map(function(t) { return '<span class="card-tag">' + t + '</span>'; }).join('');
+        a.innerHTML =
+          '<img src="' + g.img + '" alt="' + g.title + '" onerror="this.style.background=\'#1a1a1a\'">' +
+          '<div class="small-card-body">' +
+            '<div class="small-card-title">' + g.title + '</div>' +
+            '<div class="small-card-sub">' + g.desc + '</div>' +
+            '<span class="sc-badge ' + badgeCls + '">' + labelFn(g) + '</span>' +
+            '<br><span class="play-btn" style="margin-top:8px">▶ Play Now</span>' +
+          '</div>';
+        row.appendChild(a);
+      });
+    }
+
+    function buildPersonal() {
+      var favs = [], visited = [];
+      gamesList.forEach(function(g) {
+        var id     = g.link.replace('.html', '');
+        var fav    = localStorage.getItem('wg_fav_' + id) === '1';
+        var visits = parseInt(localStorage.getItem('wg_visits_' + id)) || 0;
+        if (fav)    favs.push(Object.assign({}, g, { id: id, visits: visits }));
+        if (visits) visited.push(Object.assign({}, g, { id: id, visits: visits }));
+      });
+      visited.sort(function(a, b) { return b.visits - a.visits; });
+      fillRow('fav-section',      'fav-row',      favs.slice(0, 12),    'gold',  function() { return '★ Fav'; });
+      fillRow('continue-section', 'continue-row', visited.slice(0, 12), 'green', function(g) { return g.visits + ' visit' + (g.visits === 1 ? '' : 's'); });
+    }
+
+    async function buildTopRated() {
+      try {
+        var res = await fetch(
+          SUPA_URL + '/rest/v1/game_ratings_summary?select=game_id,avg_rating,rating_count&order=avg_rating.desc&limit=12',
+          { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } }
+        );
+        if (!res.ok) return;
+        var rows = await res.json();
+        if (!rows || !rows.length) return;
+        var gameMap = {};
+        gamesList.forEach(function(g) { gameMap[g.link.replace('.html', '')] = g; });
+        var ratedGames = rows
+          .filter(function(r) { return gameMap[r.game_id]; })
+          .map(function(r) {
+            return Object.assign({}, gameMap[r.game_id], {
+              id: r.game_id,
+              avg: parseFloat(r.avg_rating).toFixed(1),
+              count: r.rating_count
+            });
+          });
+        fillRow('rated-section', 'rated-row', ratedGames, 'gold', function(g) { return '★ ' + g.avg + ' (' + g.count + ')'; });
+      } catch(e) {}
+    }
 
     // ── TAGS & SEARCH ──
-    let allCards = [];
-    let activeTag = null;
+    var allCards = [];
+    var activeTag = null;
 
-    window.onload = function () {
-      const container = document.getElementById("game-list");
-      const countEl = document.getElementById("game-count");
+    window.onload = function() {
+      trackPage('home');
+      checkFunnyMode();
+      startTotalCounter('player-count');
+      injectAuthNav(document.getElementById('headerNav'));
+      buildPersonal();
+      buildTopRated();
 
-      // Collect all unique tags
-      const allTags = new Set();
-      gamesList.forEach(g => g.tags && g.tags.forEach(t => allTags.add(t)));
+      var container = document.getElementById('game-list');
+      var countEl   = document.getElementById('game-count');
 
-      // Render tag buttons
-      const tagWrap = document.getElementById("tag-wrap");
-      allTags.forEach(tag => {
-        const btn = document.createElement("button");
-        btn.className = "tag-btn";
+      // Tags
+      var allTags = {};
+      gamesList.forEach(function(g) {
+        (g.tags || []).forEach(function(t) { allTags[t] = true; });
+      });
+      var tagWrap = document.getElementById('tag-wrap');
+      Object.keys(allTags).forEach(function(tag) {
+        var btn = document.createElement('button');
+        btn.className = 'tag-btn';
         btn.textContent = tag;
         btn.dataset.tag = tag;
-        btn.addEventListener("click", () => toggleTag(tag, btn));
+        btn.addEventListener('click', function() { toggleTag(tag, btn); });
         tagWrap.appendChild(btn);
       });
 
-      countEl.textContent = `${gamesList.length} games`;
+      countEl.textContent = gamesList.length + ' games';
 
-      gamesList.forEach(game => {
-        const a = document.createElement("a");
-        a.className = "game-card";
+      // Game cards
+      gamesList.forEach(function(game) {
+        var a = document.createElement('a');
+        a.className = 'game-card';
         a.href = game.link;
-        if (game.external) a.target = "_blank";
+        if (game.external) a.target = '_blank';
         a.dataset.title = game.title.toLowerCase();
-        a.dataset.tags = (game.tags || []).join(',');
+        a.dataset.tags  = (game.tags || []).join(',');
 
-        const tagsHtml = (game.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('');
+        var tagsHtml = (game.tags || []).map(function(t) {
+          return '<span class="card-tag">' + t + '</span>';
+        }).join('');
 
-        a.innerHTML = `
-          <img class="card-thumb" src="${game.img}" alt="${game.title}" onerror="this.style.background='#1a1a1a'">
-          <div class="card-body">
-            <div class="card-title">${game.title}</div>
-            <div class="card-desc">${game.desc}</div>
-            <div class="card-tags">${tagsHtml}</div>
-            <span class="play-btn">▶ Play Now</span>
-          </div>
-        `;
+        a.innerHTML =
+          '<img class="card-thumb" src="' + game.img + '" alt="' + game.title + '" onerror="this.style.background=\'#1a1a1a\'">' +
+          '<div class="card-body">' +
+            '<div class="card-title">' + game.title + '</div>' +
+            '<div class="card-desc">' + game.desc + '</div>' +
+            '<div class="card-tags">' + tagsHtml + '</div>' +
+            '<span class="play-btn">▶ Play Now</span>' +
+          '</div>';
 
         container.appendChild(a);
         allCards.push(a);
@@ -607,34 +633,31 @@
     function toggleTag(tag, btn) {
       if (activeTag === tag) {
         activeTag = null;
-        document.querySelectorAll(".tag-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll('.tag-btn').forEach(function(b) { b.classList.remove('active'); });
       } else {
         activeTag = tag;
-        document.querySelectorAll(".tag-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
+        document.querySelectorAll('.tag-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
       }
       filterGames();
     }
 
     function filterGames() {
-      const query = document.getElementById("search-input").value.toLowerCase().trim();
-      let visible = 0;
-      allCards.forEach(card => {
-        const titleMatch = card.dataset.title.includes(query);
-        const tagMatch = !activeTag || card.dataset.tags.split(',').includes(activeTag);
-        const show = titleMatch && tagMatch;
-        card.style.display = show ? "block" : "none";
+      var query = document.getElementById('search-input').value.toLowerCase().trim();
+      var visible = 0;
+      allCards.forEach(function(card) {
+        var show = card.dataset.title.includes(query) &&
+          (!activeTag || card.dataset.tags.split(',').includes(activeTag));
+        card.style.display = show ? 'block' : 'none';
         if (show) visible++;
       });
-      document.getElementById("game-count").textContent = `${visible} games`;
-      document.getElementById("no-results").style.display = visible === 0 ? "block" : "none";
+      document.getElementById('game-count').textContent = visible + ' games';
+      document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
     }
 
-
-    // ── KEYBINDS & SETTINGS ──
-    injectSettingsBtn();
+    // ── KEYBINDS ──
     initGlobalKeybinds(
-      () => { window.location.href = 'tools.html'; },
+      function() { window.location.href = 'tools.html'; },
       null
     );
   </script>

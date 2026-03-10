@@ -1,42 +1,47 @@
 const gamesList = [
-  {
-    title: "Granny",
-    img: "images/Granny.png",
-    link: "Granny.html",
-    desc: "Escape the haunted house without getting caught.",
-    tags: ["horror", "survival", "stealth"],
-    external: false
-  },
-  {
-    title: "Drive Mad",
-    img: "images/DriveMad.png",
-    link: "DriveMad.html",
-    desc: "Conquer wild terrain in this physics-based driving challenge.",
-    tags: ["car", "driving", "physics"],
-    external: false
-  },
-  {
-    title: "Snow Rider 3D",
-    img: "images/SnowRider.png",
-    link: "SnowRider.html",
-    desc: "Shred the slopes and dodge obstacles in this winter thrill ride.",
-    tags: ["action", "3d", "sports"],
-    external: false
-  },
-  {
-    title: "Stickman Hook",
-    img: "images/StickmanHook.png",
-    link: "StickmanHook.html",
-    desc: "Swing through levels with perfect timing and momentum.",
-    tags: ["platformer", "action", "skill"],
-    external: false
-  },
-  {
-    title: "Retro Bowl",
-    img: "images/RetroBowl.png",
-    link: "RetroBowl.html",
-    desc: "Classic football meets arcade gameplay. Build your dynasty.",
-    tags: ["sports", "retro", "football"],
-    external: false
-  }
+  // ── ORIGINALS ──
+  { title:"Granny",             img:"images/Granny.png",             link:"Granny.html",            desc:"Escape the haunted house without getting caught by Granny.",                    tags:["horror","survival"],             external:false },
+  { title:"Drive Mad",          img:"images/DriveMad.png",           link:"DriveMad.html",          desc:"Conquer wild terrain in this physics-based driving challenge.",                 tags:["driving","physics"],             external:false },
+  { title:"Snow Rider 3D",      img:"images/SnowRider.png",          link:"SnowRider.html",         desc:"Shred the slopes and dodge obstacles in this winter thrill ride.",              tags:["3d","sports"],                   external:false },
+  { title:"Stickman Hook",      img:"images/StickmanHook.png",       link:"StickmanHook.html",      desc:"Swing through levels with perfect timing and momentum.",                        tags:["platformer","action"],           external:false },
+  { title:"Retro Bowl",         img:"images/RetroBowl.png",          link:"RetroBowl.html",         desc:"Classic football meets arcade gameplay. Build your dynasty.",                   tags:["sports","classic"],              external:false },
+  { title:"Super Hot",          img:"images/SuperHot.png",           link:"SuperHot.html",          desc:"Time moves only when you move. A mind-bending FPS experience.",                 tags:["fps","action"],                  external:false },
+  { title:"Minecraft 1.5.2",    img:"images/Minecraft.png",          link:"Minecraft.html",         desc:"Build, explore and survive in the iconic block-world sandbox.",                 tags:["survival","3d"],                 external:false },
+  { title:"Slope",              img:"images/Slope.png",              link:"Slope.html",             desc:"Race a ball down an endless slope at breakneck speed.",                         tags:["endless","action"],              external:false },
+  { title:"Subway Surfers",     img:"images/SubwaySurfers.png",      link:"SubwaySurfers.html",     desc:"Dash through the subway dodging trains and collecting coins.",                  tags:["endless","action"],              external:false },
+  { title:"Fireboy & Watergirl",img:"images/FireboyWatergirl.png",   link:"FireboyWatergirl.html",  desc:"Work together to guide fire and water through temple puzzles.",                  tags:["2-player","platformer"],         external:false },
+  { title:"Chess",              img:"images/Chess.png",              link:"chess.html",             desc:"Play chess vs AI, online, or locally. Full ELO rating system.",                 tags:["strategy","2-player"],           external:false },
+  { title:"Luck",               img:"images/Luck.png",               link:"luck.html",              desc:"Mines, Crash, Coinflip, Dice & Plinko. Earn free W from daily crates.",         tags:["casino","action"],               external:false },
+  // ── NEW GAMES ──
+  { title:"Crossy Road",                img:"images/CrossyRoad.png",          link:"CrossyRoad.html",         desc:"Hop across roads and rivers without getting squashed. Endless fun.",          tags:["action","arcade"],               external:false },
+  { title:"Happy Wheels",               img:"images/HappyWheels.png",         link:"HappyWheels.html",        desc:"Brutal ragdoll physics chaos. Pick a character and survive the carnage.",     tags:["action","physics"],              external:false },
+  { title:"Drift Hunters",              img:"images/DriftHunters.png",         link:"DriftHunters.html",       desc:"Earn points drifting tuned cars on massive tracks. Upgrade everything.",     tags:["driving","3d"],                  external:false },
+  { title:"Infiltrating the Airship",   img:"images/Infiltrating.png",         link:"Infiltrating.html",       desc:"Henry Stickmin infiltrates a massive airship. Every choice matters.",         tags:["action","story"],                external:false },
+  { title:"Stealing the Diamond",       img:"images/StealingDiamond.png",      link:"StealingDiamond.html",    desc:"Henry Stickmin steals a giant diamond from a museum. Classic.",               tags:["action","story"],                external:false },
+  { title:"Fleeing the Complex",        img:"images/FleeingComplex.png",       link:"FleeingComplex.html",     desc:"Break out of the world's most secure prison. Multiple paths.",                tags:["action","story"],                external:false },
+  { title:"Breaking the Bank",          img:"images/BreakingBank.png",         link:"BreakingBank.html",       desc:"Henry Stickmin's first heist. Rob the bank, your way.",                       tags:["action","story"],                external:false },
+  { title:"Moto X3M",                   img:"images/MotoX3M.png",              link:"MotoX3M.html",            desc:"Insane motocross stunts over deadly obstacle courses.",                       tags:["driving","action"],              external:false },
+  { title:"Five Nights at Freddy's 4",  img:"images/FNAF4.png",                link:"FNAF4.html",              desc:"Survive the night with animatronics right outside your door.",                tags:["horror","survival"],             external:false },
+  { title:"Rooftop Snipers 2",          img:"images/RooftopSnipers2.png",      link:"RooftopSnipers2.html",    desc:"Knock your opponent off the rooftop. 1v1 chaotic sniper fights.",             tags:["action","2-player"],             external:false },
+  { title:"A Dance of Fire and Ice",    img:"images/ADOFAI.png",               link:"ADOFAI.html",             desc:"A brutal rhythm game — hit the beat or break the chain.",                     tags:["rhythm","music"],                external:false },
+  { title:"There Is No Game",           img:"images/ThereIsNoGame.png",        link:"ThereIsNoGame.html",      desc:"There is no game here. Stop clicking. Seriously.",                            tags:["puzzle","comedy"],               external:false },
+  { title:"Baldi's Basics",             img:"images/BaldisBasics.png",         link:"BaldisBasics.html",       desc:"Answer math questions and escape Baldi's school. He gets faster.",           tags:["horror","action"],               external:false },
+  { title:"Rocket Soccer Derby",        img:"images/RocketSoccer.png",         link:"RocketSoccer.html",       desc:"Rocket-powered cars playing soccer. Absolute mayhem.",                       tags:["sports","action"],               external:false },
+  { title:"Red Ball 4",                 img:"images/RedBall4.png",             link:"RedBall4.html",           desc:"Roll, jump and bounce through dangerous puzzle platformer levels.",           tags:["platformer","action"],           external:false },
+  { title:"Time Shooter 3: SWAT",       img:"images/TimeShooter3.png",         link:"TimeShooter3.html",       desc:"Time only moves when you do. Clear rooms in slow-motion style.",              tags:["fps","action"],                  external:false },
+  { title:"Age of War",                 img:"images/AgeOfWar.png",             link:"AgeOfWar.html",           desc:"Evolve through the ages of war. Build, attack, and defend.",                  tags:["strategy","action"],             external:false },
+  { title:"Doom",                       img:"images/Doom.png",                 link:"Doom.html",               desc:"The original FPS that started it all. Rip and tear.",                        tags:["fps","action","classic"],        external:false },
+  { title:"Boxing Random",              img:"images/BoxingRandom.png",         link:"BoxingRandom.html",       desc:"Chaotic one-button boxing. Anything can happen.",                            tags:["action","2-player"],             external:false },
+  { title:"Basketball Random",          img:"images/BasketRandom.png",         link:"BasketRandom.html",       desc:"Random physics basketball. Nothing makes sense and it's perfect.",          tags:["sports","2-player"],             external:false },
+  { title:"Volleyball Random",          img:"images/VolleyRandom.png",         link:"VolleyRandom.html",       desc:"Wild volleyball with unpredictable physics. First to 5 wins.",               tags:["sports","2-player"],             external:false },
+  { title:"Soccer Random",              img:"images/SoccerRandom.png",         link:"SoccerRandom.html",       desc:"Chaotic one-button soccer. Score in the most ridiculous ways.",              tags:["sports","2-player"],             external:false },
+  { title:"Minecraft 1.5.2 Precision",  img:"images/MinecraftPrecision.png",   link:"MinecraftPrecision.html", desc:"Full Minecraft via Precision Client. Build and survive.",                     tags:["survival","3d"],                 external:false },
+
+  // ── BATCH 3 ──
+  { title:"Minecraft 1.8",                img:"images/Minecraft18.png",          link:"Minecraft18.html",        desc:"Full Minecraft 1.8 experience via EaglercraftX. Build and survive in-browser.",  tags:["survival","3d"],                 external:false },
+  { title:"1v1.lol",                      img:"images/OneVsOneLol.png",           link:"OneVsOneLol.html",         desc:"Build, shoot, and outplay in this 1v1 battle arena. Practice your mechanics.",  tags:["fps","action","3d"],             external:false },
+  { title:"Infinite Craft",               img:"images/InfiniteCraft.png",         link:"InfiniteCraft.html",       desc:"Combine elements to craft new things. Start with fire, water, wind and earth.", tags:["puzzle","creative"],             external:false },
+  { title:"Totally Accurate Battle Sim.", img:"images/TABS.png",                  link:"TABS.html",                desc:"Drop wobbly units on a battlefield and watch total chaos unfold.",              tags:["strategy","physics"],            external:false },
+  { title:"Geometry Dash Lite",           img:"images/GeometryDash.png",          link:"GeometryDash.html",        desc:"Jump, fly and flip your way through impossible levels to the beat.",           tags:["rhythm","action"],               external:false },
+  { title:"Sans Bad Time Sim.",           img:"images/BadTime.png",               link:"BadTime.html",             desc:"Think you can beat Sans? Good luck.",                                          tags:["action","rhythm"],               external:false },
 ];

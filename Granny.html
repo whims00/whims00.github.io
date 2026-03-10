@@ -2,283 +2,274 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Play Granny — Whims Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --black: #080808;
-      --surface: #111111;
-      --surface2: #181818;
-      --border: #222222;
-      --green: #3ddc84;
-      --green-dim: #2ab86a;
-      --green-glow: rgba(61, 220, 132, 0.12);
-      --text: #f0f0f0;
-      --muted: #777;
+      --black: #080808; --surface: #111111; --surface2: #181818; --border: #222222;
+      --green: #3ddc84; --green-dim: #2ab86a; --green-glow: rgba(61,220,132,0.12);
+      --text: #f0f0f0; --muted: #777; --gold: #f5c542;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { height: 100%; }
-    body {
-      height: 100%;
-      background-color: var(--black);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      display: flex;
-      flex-direction: row;
-      overflow: hidden;
-    }
-    .main {
-      flex: 1 1 0;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      padding: 14px;
-      gap: 10px;
-      overflow: hidden;
-    }
-    .game-wrapper {
-      flex: 1 1 0;
-      min-height: 0;
-      position: relative;
-      background: #000;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
-    .game-wrapper iframe {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-    .game-wrapper canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-    #unity-container {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .game-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 18px;
-      flex-shrink: 0;
-    }
+    body { height: 100%; background-color: var(--black); color: var(--text); font-family: 'DM Sans', sans-serif; display: flex; flex-direction: row; overflow: hidden; }
+    .main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; height: 100vh; padding: 14px; gap: 10px; overflow: hidden; }
+    .game-wrapper { flex: 1 1 0; min-height: 0; position: relative; background: #000; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .game-wrapper canvas { width: 100%; height: 100%; display: block; }
+    #unity-container { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #loadOverlay { position: absolute; inset: 0; background: #050505; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 10; }
+    .load-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800; }
+    #loadBar { width: 220px; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+    #loadFill { height: 100%; background: var(--green); border-radius: 2px; width: 0%; transition: width 0.3s; }
+    #loadSub { font-size: 0.72rem; color: var(--muted); }
+    .stats-overlay { position: absolute; top: 10px; left: 10px; display: flex; gap: 8px; z-index: 5; pointer-events: none; }
+    .stat-pill { background: rgba(8,8,8,0.82); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(8px); border-radius: 20px; padding: 5px 13px; font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .stat-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 2s ease-in-out infinite; flex-shrink: 0; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .game-bar { display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 18px; flex-shrink: 0; gap: 10px; }
     .game-bar-left { display: flex; align-items: center; gap: 12px; }
-    .game-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: blink 2s ease-in-out infinite;
-    }
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
+    .game-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: blink 2s ease-in-out infinite; }
     .game-title { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; }
-    .fullscreen-btn {
-      background: var(--green); color: #000; border: none;
-      padding: 8px 16px; font-size: 0.82rem;
-      font-family: 'DM Sans', sans-serif; font-weight: 700;
-      border-radius: 8px; cursor: pointer;
-      transition: background 0.2s, transform 0.15s;
-    }
+    .tags { display: flex; gap: 5px; }
+    .tag { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 20px; background: rgba(61,220,132,0.08); border: 1px solid rgba(61,220,132,0.18); color: var(--green); }
+    .bar-right { display: flex; gap: 8px; }
+    .fullscreen-btn { background: var(--green); color: #000; border: none; padding: 8px 16px; font-size: 0.82rem; font-family: 'DM Sans', sans-serif; font-weight: 700; border-radius: 8px; cursor: pointer; transition: background 0.2s, transform 0.15s; }
     .fullscreen-btn:hover { background: var(--green-dim); transform: scale(1.03); }
-    .game-warning {
-      background: rgba(61,220,132,0.1);
-      border: 1px solid rgba(61,220,132,0.25);
-      color: var(--green);
-      padding: 10px 16px; border-radius: 10px;
-      font-size: 0.82rem; font-weight: 500; flex-shrink: 0;
-    }
-    /* SIDEBAR */
-    .sidebar {
-      width: 270px;
-      flex-shrink: 0;
-      background: var(--surface);
-      border-left: 1px solid var(--border);
-      padding: 18px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      height: 100vh;
-    }
+    .fav-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 8px 14px; font-size: 0.82rem; font-family: 'DM Sans', sans-serif; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+    .fav-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .fav-btn.on { border-color: var(--gold); color: var(--gold); background: rgba(245,197,66,0.08); }
+    .sidebar { width: 270px; flex-shrink: 0; background: var(--surface); border-left: 1px solid var(--border); padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; height: 100vh; }
     .sidebar::-webkit-scrollbar { width: 4px; }
     .sidebar::-webkit-scrollbar-track { background: transparent; }
     .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    .back-btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text); text-decoration: none;
-      font-weight: 600; font-size: 0.82rem;
-      padding: 9px 16px; border-radius: 10px;
-      transition: border-color 0.2s, background 0.2s; flex-shrink: 0;
-    }
+    .back-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); text-decoration: none; font-weight: 600; font-size: 0.82rem; padding: 9px 16px; border-radius: 10px; transition: border-color 0.2s, background 0.2s; flex-shrink: 0; }
     .back-btn:hover { border-color: rgba(61,220,132,0.4); background: #1a1a1a; }
-    .sidebar-label {
-      font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700;
-      color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;
-    }
-    .game-card {
-      display: block; text-decoration: none; color: inherit;
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden;
-      transition: transform 0.2s, border-color 0.2s;
-    }
+    .sidebar-label { font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .session-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .session-head { font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: 0.08em; }
+    .session-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .sstat { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 9px; padding: 11px 12px; }
+    .sstat-val { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .sstat-lab { font-size: 0.62rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+    .divider { height: 1px; background: var(--border); }
+    .rate-row { display: flex; align-items: center; gap: 5px; }
+    .star { font-size: 1.2rem; cursor: pointer; color: var(--border); transition: color 0.1s; user-select: none; }
+    .star.lit { color: var(--gold); }
+    .rate-label { font-size: 0.7rem; color: var(--muted); }
+    .game-card { display: block; text-decoration: none; color: inherit; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; }
     .game-card:hover { transform: translateY(-3px); border-color: rgba(61,220,132,0.3); }
     .game-card img { width: 100%; height: 110px; object-fit: cover; display: block; }
     .card-info { padding: 10px 12px 12px; }
     .card-info h3 { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
     .card-info p { font-size: 0.75rem; color: var(--muted); line-height: 1.4; }
-      .game-players {
-      font-size: 0.72rem;
-      color: var(--muted);
-      font-weight: 600;
-      margin-left: 4px;
-    }
   </style>
 </head>
 <body>
-  <div class="main" id="mainContainer">
-    
-    <div class="game-wrapper">
+  <div class="main">
+    <div class="game-wrapper" id="gameWrapper">
       <div id="unity-container"><canvas id="unity-canvas"></canvas></div>
+      <div id="loadOverlay">
+        <div class="load-title">🎃 Loading Granny…</div>
+        <div id="loadBar"><div id="loadFill"></div></div>
+        <div id="loadSub">Fetching game files…</div>
+      </div>
+      <div class="stats-overlay">
+        <div class="stat-pill"><span class="dot"></span><span id="playerCount">— playing</span></div>
+        <div class="stat-pill">⏱ <span id="sessionTime">0:00</span></div>
+      </div>
     </div>
     <div class="game-bar">
       <div class="game-bar-left">
-        <div class="game-dot"></div><span class="game-players" id="game-player-count"></span>
+        <div class="game-dot"></div>
         <span class="game-title">Granny</span>
+        <div class="tags"><span class="tag">horror</span><span class="tag">survival</span></div>
       </div>
-      <button id="fullscreen-btn" class="fullscreen-btn">⛶ Fullscreen</button>
+      <div class="bar-right">
+        <button class="fav-btn" id="favBtn" onclick="toggleFav()">☆ Favourite</button>
+        <button class="fullscreen-btn" onclick="goFullscreen()">⛶ Fullscreen</button>
+      </div>
     </div>
   </div>
+
   <div class="sidebar">
+    <div id="headerNav" style="margin-bottom:4px"></div>
     <a href="index.html" class="back-btn">← Home</a>
+    <div class="session-card">
+      <div class="session-head">📊 Session</div>
+      <div class="session-grid">
+        <div class="sstat"><div class="sstat-val" id="st-time">0:00</div><div class="sstat-lab">Time Played</div></div>
+        <div class="sstat"><div class="sstat-val" id="st-visits">1</div><div class="sstat-lab">Your Visits</div></div>
+        <div class="sstat"><div class="sstat-val" id="st-total">—</div><div class="sstat-lab">Total Plays</div></div>
+        <div class="sstat"><div class="sstat-val" id="st-rank">—</div><div class="sstat-lab">Popularity</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sidebar-label" style="font-size:0.68rem;">Rate this game</div>
+      <div class="rate-row">
+        <span class="star" data-v="1" onclick="rateGame(1)">★</span>
+        <span class="star" data-v="2" onclick="rateGame(2)">★</span>
+        <span class="star" data-v="3" onclick="rateGame(3)">★</span>
+        <span class="star" data-v="4" onclick="rateGame(4)">★</span>
+        <span class="star" data-v="5" onclick="rateGame(5)">★</span>
+        <span class="rate-label" id="rateLabel">Not rated</span>
+      </div>
+    </div>
     <div class="sidebar-label">More Games</div>
     <div id="random-games"></div>
   </div>
+
   <script src="tracking.js"></script>
+  <script src="auth.js"></script>
   <script src="games.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/testamalame/sef@main/sedk.js" id="gamemonetize-sdk"></script>
+  <script src="https://cdn.jsdelivr.net/gh/testamalame/sef@main/sedk.js" id="gamemonetize-sdk"></script>
   <script src="https://cdn.jsdelivr.net/gh/gru6nny/ohd@main/sdk.js"></script>
   <script>
-    const canvas = document.querySelector("#unity-canvas");
-    const buildUrl = "https://cdn.jsdelivr.net/gh/gru6nny/ohd@main/Build";
-    const loaderUrl = buildUrl + "/Granny.loader.js";
-    async function mergeUnityWebFiles(baseUrl, filePrefix, totalParts, extension) {
-      const buffers = [];
-      for (let i = 1; i <= totalParts; i++) {
-        const response = await fetch(`${baseUrl}/${filePrefix}_part${i}.${extension}`);
-        if (!response.ok) throw new Error(`Failed to load part ${i}`);
-        buffers.push(await response.arrayBuffer());
-      }
-      const totalLength = buffers.reduce((acc, b) => acc + b.byteLength, 0);
-      const combined = new Uint8Array(totalLength);
-      let offset = 0;
-      buffers.forEach(b => { combined.set(new Uint8Array(b), offset); offset += b.byteLength; });
-      return combined;
-    }
-    async function initializeGame() {
+    const GAME_ID    = 'Granny';
+    const GAME_TITLE = 'Granny';
+
+    // ── SESSION TIMER ──
+    let sec = 0;
+    function fmt(s) { return Math.floor(s/60) + ':' + (s%60 < 10 ? '0' : '') + (s%60); }
+    setInterval(() => {
+      sec++;
+      document.getElementById('sessionTime').textContent = fmt(sec);
+      document.getElementById('st-time').textContent = fmt(sec);
+    }, 1000);
+
+    // ── VISITS ──
+    (function() {
+      const key = 'wg_visits_' + GAME_ID;
+      const v = (+localStorage.getItem(key) || 0) + 1;
+      localStorage.setItem(key, v);
+      document.getElementById('st-visits').textContent = v;
+    })();
+
+    // ── PLAYER COUNT ──
+    async function updateCount() {
       try {
-        const dataBuffer = await mergeUnityWebFiles(buildUrl, "Granny", 2, "data");
-        const wasmBuffer = await mergeUnityWebFiles(buildUrl, "Granny", 2, "wasm");
-        const config = {
-          dataUrl: URL.createObjectURL(new Blob([dataBuffer], { type: "application/octet-stream" })),
-          frameworkUrl: buildUrl + "/Granny.framework.js",
-          codeUrl: URL.createObjectURL(new Blob([wasmBuffer], { type: "application/octet-stream" })),
-          streamingAssetsUrl: buildUrl + "/StreamingAssets",
-          companyName: "Anastasia Kazantseva",
-          productName: "Granny",
-          productVersion: "1.0"
-        };
-        const script = document.createElement("script");
-        script.src = loaderUrl;
-        script.onload = () => {
-          createUnityInstance(canvas, config).then(instance => {
-            canvas.addEventListener('pointerdown', () => {
-              if (typeof sdk !== 'undefined' && typeof sdk.showBanner === 'function') sdk.showBanner();
-            });
-          }).catch(err => alert(err));
-        };
-        document.body.appendChild(script);
-      } catch (err) { console.error("Game failed to load:", err); }
+        const c = await getPageCount(GAME_ID);
+        document.getElementById('playerCount').textContent = c > 0 ? c + ' playing' : '— playing';
+        document.getElementById('st-total').textContent = c >= 0 ? String(c) : '—';
+      } catch(e) {}
     }
-    initializeGame();
-  </script>
-  <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      trackPage('Granny');
-      checkFunnyMode();
-      function updateGameCount() {
-        const c = getPageCount('Granny');
-        const el = document.getElementById('game-player-count');
-        if (el) el.textContent = c > 0 ? `· ${c} playing` : '';
-      }
-      updateGameCount();
-      setInterval(updateGameCount, 4000);
-      const container = document.getElementById("random-games");
-      const filtered = gamesList.filter(g => g.title !== "Granny");
-      const shuffled = filtered.sort(() => 0.5 - Math.random());
-      shuffled.slice(0, 6).forEach(game => {
-        const a = document.createElement("a");
-        a.href = game.link;
-        a.className = "game-card";
-        if (game.external) a.target = "_blank";
-        a.innerHTML = `
-          <img src="${game.img}" alt="${game.title}" onerror="this.style.background='#1a1a1a'">
-          <div class="card-info">
-            <h3>${game.title}</h3>
-            <p>${game.desc}</p>
-          </div>
-        `;
-        container.appendChild(a);
+    updateCount();
+    setInterval(updateCount, 5000);
+
+    // ── POPULARITY RANK ──
+    function updateRank() {
+      const myV = +localStorage.getItem('wg_visits_' + GAME_ID) || 0;
+      let rank = 1;
+      gamesList.forEach(g => {
+        const v = +localStorage.getItem('wg_visits_' + g.link.replace('.html','')) || 0;
+        if (v > myV) rank++;
       });
-    });
-
-    // ── KEYBIND ──
-    function getKeybind(key) {
-      try { return JSON.parse(localStorage.getItem('wg_kb_' + key)); } catch { return null; }
+      document.getElementById('st-rank').textContent = '#' + rank;
     }
-    document.addEventListener('keydown', e => {
-      const toTools = getKeybind('toTools') || { key: 'k', ctrl: true, meta: false, shift: false };
-      const m = e.key.toLowerCase() === toTools.key.toLowerCase()
-        && !!e.ctrlKey === !!toTools.ctrl && !!e.metaKey === !!toTools.meta && !!e.shiftKey === !!toTools.shift;
-      if (m) { e.preventDefault(); window.location.href = 'tools.html'; }
-    });
+    updateRank();
 
-    document.getElementById("fullscreen-btn").addEventListener("click", () => {
-      const c = document.getElementById("mainContainer");
-      if (!document.fullscreenElement) {
-        c.requestFullscreen().catch(err => alert(err.message));
-      } else {
-        document.exitFullscreen();
+    // ── FAVOURITE ──
+    function updateFavBtn() {
+      const on = localStorage.getItem('wg_fav_' + GAME_ID) === '1';
+      document.getElementById('favBtn').textContent = on ? '★ Favourited' : '☆ Favourite';
+      document.getElementById('favBtn').classList.toggle('on', on);
+    }
+    function toggleFav() {
+      const key = 'wg_fav_' + GAME_ID;
+      localStorage.setItem(key, localStorage.getItem(key) === '1' ? '0' : '1');
+      updateFavBtn();
+    }
+    updateFavBtn();
+
+    // ── RATING ──
+    function rateGame(v) {
+      localStorage.setItem('wg_rate_' + GAME_ID, v);
+      document.querySelectorAll('.star').forEach(s => s.classList.toggle('lit', +s.dataset.v <= v));
+      document.getElementById('rateLabel').textContent = ['','Poor','OK','Good','Great','Amazing'][v];
+      if (!window._supa) return;
+      window._supa.auth.getUser().then(({ data }) => {
+        if (!data?.user) return;
+        window._supa.from('game_ratings').upsert(
+          { game_id: GAME_ID, user_id: data.user.id, rating: v },
+          { onConflict: 'game_id,user_id' }
+        );
+      });
+    }
+    const _sr = +localStorage.getItem('wg_rate_' + GAME_ID) || 0;
+    if (_sr) rateGame(_sr);
+
+    // ── FULLSCREEN — wrapper div (works cross-origin) ──
+    function goFullscreen() {
+      const el = document.getElementById('gameWrapper');
+      (el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen).call(el);
+    }
+
+    // ── UNITY LOADER ──
+    const canvas  = document.getElementById('unity-canvas');
+    const buildUrl = 'https://cdn.jsdelivr.net/gh/gru6nny/ohd@main/Build';
+
+    function setLoad(pct, msg) {
+      document.getElementById('loadFill').style.width = pct + '%';
+      document.getElementById('loadSub').textContent = msg;
+    }
+    async function mergeParts(base, prefix, parts, ext) {
+      const buffers = [];
+      for (let i = 1; i <= parts; i++) {
+        setLoad(Math.round((i - 0.5) / parts * (ext === 'data' ? 40 : 40) + (ext === 'wasm' ? 42 : 2)), `Loading ${ext} ${i}/${parts}…`);
+        const r = await fetch(`${base}/${prefix}_part${i}.${ext}`);
+        if (!r.ok) throw new Error(`Failed part ${i}`);
+        buffers.push(await r.arrayBuffer());
       }
-    });
-    // Ctrl+K → educational tools
-    document.addEventListener('keydown', e => {
-      if (e.ctrlKey && e.key === 'k') { e.preventDefault(); window.location.href = 'tools.html'; }
+      const total = buffers.reduce((a, b) => a + b.byteLength, 0);
+      const out = new Uint8Array(total);
+      let off = 0;
+      buffers.forEach(b => { out.set(new Uint8Array(b), off); off += b.byteLength; });
+      return out;
+    }
+    async function initGame() {
+      try {
+        setLoad(2, 'Loading game data…');
+        const data = await mergeParts(buildUrl, 'Granny', 2, 'data');
+        setLoad(42, 'Loading WebAssembly…');
+        const wasm = await mergeParts(buildUrl, 'Granny', 2, 'wasm');
+        setLoad(84, 'Starting engine…');
+        const config = {
+          dataUrl: URL.createObjectURL(new Blob([data], { type: 'application/octet-stream' })),
+          frameworkUrl: buildUrl + '/Granny.framework.js',
+          codeUrl: URL.createObjectURL(new Blob([wasm], { type: 'application/octet-stream' })),
+          streamingAssetsUrl: buildUrl + '/StreamingAssets',
+          companyName: 'Anastasia Kazantseva', productName: 'Granny', productVersion: '1.0'
+        };
+        const script = document.createElement('script');
+        script.src = buildUrl + '/Granny.loader.js';
+        script.onload = () => {
+          setLoad(92, 'Initialising…');
+          createUnityInstance(canvas, config, p => setLoad(92 + Math.round(p * 8), 'Almost ready…'))
+            .then(() => { document.getElementById('loadOverlay').style.display = 'none'; })
+            .catch(e => { document.getElementById('loadSub').textContent = 'Error: ' + e; });
+        };
+        script.onerror = () => { document.getElementById('loadSub').textContent = 'Failed to load engine.'; };
+        document.body.appendChild(script);
+      } catch(e) {
+        document.getElementById('loadSub').textContent = 'Failed: ' + e.message;
+      }
+    }
+    initGame();
+
+    // ── SIDEBAR RANDOM GAMES ──
+    gamesList.filter(g => g.title !== GAME_TITLE).sort(() => .5 - Math.random()).slice(0, 6).forEach(game => {
+      const a = document.createElement('a');
+      a.href = game.link; a.className = 'game-card';
+      if (game.external) a.target = '_blank';
+      a.innerHTML = `<img src="${game.img}" alt="${game.title}" onerror="this.style.background='#1a1a1a'"><div class="card-info"><h3>${game.title}</h3><p>${game.desc}</p></div>`;
+      document.getElementById('random-games').appendChild(a);
     });
 
-    // ── KEYBINDS & SETTINGS BTN ──
-    injectSettingsBtn();
-    initGlobalKeybinds(
-      () => { window.location.href = 'tools.html'; },
-      null
-    );
-
+    // ── INIT ──
+    trackPage(GAME_ID);
+    checkFunnyMode();
+    injectAuthNav(document.getElementById('headerNav'));
+    initGlobalKeybinds(() => { window.location.href = 'tools.html'; }, null);
   </script>
 </body>
 </html>
