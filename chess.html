@@ -1463,6 +1463,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
       const m = moves[Math.floor(Math.random()*moves.length)];
       setTimeout(()=>{
         document.getElementById('thinkingEl').classList.remove('show');
+        botMayOfferDraw(); botMayResign();
         // Fire queued premove
         if (premove && gameActive && !chess.game_over()) { const pm=premove; premove=null; renderPremove(); setTimeout(()=>{ if(gameActive) attemptMove(pm.from,pm.to); },50); }
         if (!gameActive) return;
@@ -2049,8 +2050,79 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     renderBoard(); renderArrows();
   }
   function offerDraw() {
-    if (mode==='online'&&gameChannel) { gameChannel.send({type:'broadcast',event:'draw_offer',payload:{}}); showToast('Draw offered'); }
-    else if (confirm('Accept draw?')) endGameManual('draw','Draw agreed');
+    if (mode==='online'&&gameChannel) {
+      gameChannel.send({type:'broadcast',event:'draw_offer',payload:{}});
+      showToast('Draw offered');
+    } else if (mode==='computer') {
+      // Bot evaluates draw based on position
+      botConsiderDraw();
+    }
+  }
+
+  function botConsiderDraw() {
+    // Bot accepts draw if it's losing or equal, rejects if winning
+    const pos = chess.board();
+    const VALS = {p:1,n:3,b:3,r:5,q:9,k:0};
+    let white=0, black=0;
+    pos.forEach(row => row.forEach(sq => {
+      if (!sq) return;
+      if (sq.color==='w') white+=VALS[sq.type]||0;
+      else black+=VALS[sq.type]||0;
+    }));
+    const botColor = playerColor==='white'?'black':'white';
+    const botScore = botColor==='white' ? white-black : black-white;
+    // Accept draw if bot is losing (score < -1) or equal (within 1 pawn)
+    setTimeout(() => {
+      if (botScore <= 1) {
+        showToast('Bot accepts the draw.');
+        endGameManual('draw', 'Draw agreed');
+      } else {
+        showToast('Bot declines the draw.');
+      }
+    }, 800 + Math.random()*600);
+  }
+
+  function botMayOfferDraw() {
+    // Bot occasionally offers a draw when it's losing
+    if (mode!=='computer'||!gameActive) return;
+    const pos = chess.board();
+    const VALS = {p:1,n:3,b:3,r:5,q:9,k:0};
+    let white=0, black=0;
+    pos.forEach(row => row.forEach(sq => {
+      if (!sq) return;
+      if (sq.color==='w') white+=VALS[sq.type]||0;
+      else black+=VALS[sq.type]||0;
+    }));
+    const botColor = playerColor==='white'?'black':'white';
+    const botScore = botColor==='white' ? white-black : black-white;
+    if (botScore < -3 && Math.random() < 0.15) {
+      setTimeout(() => {
+        if (!gameActive) return;
+        if (confirm('The bot offers a draw. Accept?')) endGameManual('draw','Draw agreed');
+      }, 400);
+    }
+  }
+
+  function botMayResign() {
+    if (mode!=='computer'||!gameActive) return;
+    const pos = chess.board();
+    const VALS = {p:1,n:3,b:3,r:5,q:9,k:0};
+    let white=0, black=0;
+    pos.forEach(row => row.forEach(sq => {
+      if (!sq) return;
+      if (sq.color==='w') white+=VALS[sq.type]||0;
+      else black+=VALS[sq.type]||0;
+    }));
+    const botColor = playerColor==='white'?'black':'white';
+    const botScore = botColor==='white' ? white-black : black-white;
+    // Resign if down by a queen+ (9+ points) — only on hard+ difficulties
+    if (botScore < -9 && diffDepth >= 10 && Math.random() < 0.2) {
+      setTimeout(() => {
+        if (!gameActive) return;
+        showToast('The bot resigns.');
+        endGameManual(playerColor, 'Bot resigned');
+      }, 600);
+    }
   }
   function handleDrawOffer() { if(confirm('Opponent offers a draw. Accept?')){ endGameManual('draw','Draw agreed'); if(gameChannel)gameChannel.send({type:'broadcast',event:'draw_offer',payload:{}}); } }
   function resignGame() {
@@ -2250,18 +2322,23 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
 
       while (attempts < 5) {
         attempts++;
-        const res = await fetch('https://lichess.org/api/puzzle/next');
+        if (attempts > 1) await new Promise(r => setTimeout(r, 600)); // avoid 429
+        let res;
+        try { res = await fetch('https://lichess.org/api/puzzle/next'); }
+        catch(fe) { throw new Error('Network error — check your connection'); }
+        if (res.status === 429) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
         if (!res.ok) throw new Error('Lichess API error: ' + res.status);
         const candidate = await res.json();
         const rating = candidate.puzzle?.rating || 0;
         const id = candidate.puzzle?.id;
-        // Accept if rating in range AND not seen before (or seen list is huge)
         if (rating >= diff.min && rating < diff.max && !seen.includes(id)) {
           data = candidate;
           break;
         }
-        // After 5 attempts just use the last one regardless
-        if (attempts === 5) data = candidate;
+        if (attempts === 5) data = candidate; // fallback: use whatever we got
       }
 
       if (!data) throw new Error('No puzzle found');
@@ -2297,7 +2374,6 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
       playerColor = puzzleColor;
       boardFlipped = puzzleColor === 'black';
 
-      markPuzzleSeen(puzzleData.id);
       const ol = document.getElementById('puzzleLoadingOverlay');
       if (ol) ol.style.display = 'none';
       gameActive = true;
@@ -2336,14 +2412,15 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     } else if (state === 'error') {
       el.innerHTML = diffPicker + `<div style="color:var(--red);font-size:0.82rem;padding:4px 0;">Failed to load: ${msg||'check connection'}</div>
         <button onclick="startPuzzle()" style="margin-top:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.78rem;padding:8px;border-radius:8px;cursor:pointer;width:100%;">Retry</button>`;
-    } else if (state === 'solved') {
+    } else if (state === 'solved' || state === 'revealed') {
       const seenCount = getSeenPuzzles().length;
+      const wasSolved = state === 'solved';
       el.innerHTML = diffPicker + `
         <div style="text-align:center;padding:8px 0;">
-          <div style="font-size:2rem;margin-bottom:6px;">✅</div>
-          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--green);margin-bottom:4px;">Solved!</div>
-          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:12px;">${seenCount} puzzle${seenCount===1?'':' s'} completed</div>
-          <button onclick="startPuzzle()" style="background:var(--green);border:none;color:#000;font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.85rem;padding:10px;border-radius:9px;cursor:pointer;width:100%;">Next Puzzle →</button>
+          <div style="font-size:2rem;margin-bottom:6px;">${wasSolved ? '✅' : '💡'}</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:${wasSolved ? 'var(--green)' : 'var(--muted)'};margin-bottom:4px;">${wasSolved ? 'Solved!' : 'Solution shown'}</div>
+          ${wasSolved ? `<div style="font-size:0.72rem;color:var(--muted);margin-bottom:12px;">${seenCount} puzzle${seenCount===1?'':'s'} completed</div>` : '<div style="font-size:0.72rem;color:var(--muted);margin-bottom:12px;">Better luck next time!</div>'}
+          <button onclick="startPuzzle()" style="background:${wasSolved ? 'var(--green)' : 'var(--surface2)'};border:${wasSolved ? 'none' : '1px solid var(--border)'};color:${wasSolved ? '#000' : 'var(--text)'};font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.85rem;padding:10px;border-radius:9px;cursor:pointer;width:100%;">Next Puzzle →</button>
         </div>`;
     } else {
       // playing
@@ -2368,12 +2445,14 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
   }
 
   function showPuzzleSolution() {
-    // Play through remaining moves automatically
     gameActive = false;
+    puzzleSolved = true;
+    // Start from current puzzleMoveIdx (whatever is left)
     let idx = puzzleMoveIdx;
+    // player moves are at even offsets from idx=1: 1,3,5... opponent: 2,4,6...
     function playNext() {
       if (idx >= puzzleMoves.length) {
-        updatePuzzleUI('solved');
+        updatePuzzleUI('revealed');
         return;
       }
       const uci = puzzleMoves[idx];
@@ -2384,20 +2463,18 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
         moveHistory.push({san:mv.san, fen:chess.fen(), from:f, to:t});
         historyIdx = moveHistory.length-1;
         renderBoard();
-        // Flash green on correct moves, normal on opponent moves
-        const isMyMove = (idx - 1) % 2 === 0;
-        if (isMyMove) {
-          const boardWrap = document.getElementById('boardWrap');
-          boardWrap.classList.remove('puzzle-correct-flash');
-          void boardWrap.offsetWidth;
-          boardWrap.classList.add('puzzle-correct-flash');
-          setTimeout(() => boardWrap.classList.remove('puzzle-correct-flash'), 500);
-        }
+        // Player moves are odd indices (1,3,5), opponent even (2,4,6)
+        const isMyMove = idx % 2 === 1;
+        const boardWrap = document.getElementById('boardWrap');
+        boardWrap.classList.remove('puzzle-correct-flash');
+        void boardWrap.offsetWidth;
+        if (isMyMove) boardWrap.classList.add('puzzle-correct-flash');
+        setTimeout(() => boardWrap.classList.remove('puzzle-correct-flash'), 500);
       }
       idx++;
-      setTimeout(playNext, 600);
+      setTimeout(playNext, 700);
     }
-    setTimeout(playNext, 300);
+    setTimeout(playNext, 200);
   }
 
   function handlePuzzleMove(from, to, promotion) {
@@ -2406,9 +2483,10 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     const expected = expectedUci.slice(0,4) + (expectedUci[4] || '');
 
     if (played !== expected) {
-      // Wrong move — shake+pulse the board, revert
       puzzleWrongAnimation();
       showToast('❌ Not the best move — try again');
+      selectedSq = null; legalMoves = [];
+      renderBoard(); // re-render so piece snaps back visually
       return false;
     }
 
@@ -2423,6 +2501,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
 
     if (puzzleMoveIdx >= puzzleMoves.length) {
       puzzleSolved = true;
+      markPuzzleSeen(puzzleData?.id);
       updatePuzzleUI('solved');
       showToast('✅ Puzzle solved!');
       return true;
@@ -2441,6 +2520,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
         renderBoard();
         if (puzzleMoveIdx >= puzzleMoves.length) {
           puzzleSolved = true;
+          markPuzzleSeen(puzzleData?.id);
           updatePuzzleUI('solved');
           showToast('✅ Puzzle solved!');
         }

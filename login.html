@@ -204,17 +204,9 @@
         return;
       }
 
-      // Insert profile row
-      if (signupData?.user) {
-        console.log('Inserting profile for', signupData.user.id);
-        const { error: profErr } = await sb.from('profiles').upsert({
-          id: signupData.user.id,
-          username: username,
-          display_name: display || username,
-          elo: 1200, wins: 0, losses: 0, draws: 0
-        }, { onConflict: 'id' });
-        if (profErr) console.warn('Profile upsert error:', profErr.message);
-      }
+      // Profile row is created by Supabase trigger after email verification
+      // Store metadata in user_metadata so trigger can use it
+      console.log('Account created, awaiting email verification');
 
       document.getElementById('signupForm').style.display = 'none';
       document.getElementById('okBox').classList.remove('show');
