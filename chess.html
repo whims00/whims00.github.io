@@ -118,6 +118,7 @@
 
     /* SVG Pieces */
     .piece-img{width:90%;height:90%;position:relative;z-index:3;pointer-events:none;display:block;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5));flex-shrink:0;}
+    .piece-img.sliding{position:fixed!important;pointer-events:none!important;z-index:100;transition:left 0.18s cubic-bezier(0.25,0.46,0.45,0.94),top 0.18s cubic-bezier(0.25,0.46,0.45,0.94);}
     .piece-drag{position:fixed;pointer-events:none;z-index:9999;width:70px;height:70px;transform:translate(-50%,-50%);opacity:0.92;display:none;}
 
     /* Coord labels */
@@ -351,6 +352,19 @@
             </div>
           </div>
           </div><!-- end board-inner -->
+        </div>
+        <!-- Puzzle level bar — Mathspace-style panel below the board -->
+        <div id="puzzleLevelBar" style="display:none;width:100%;background:var(--surface2);border-top:2px solid var(--border);border-radius:0 0 8px 8px;box-sizing:border-box;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px 4px;">
+            <div id="puzzleLevelTitle" style="font-family:'Syne',sans-serif;font-weight:800;font-size:0.72rem;color:var(--text);letter-spacing:0.03em;">LEVELS</div>
+            <div style="display:flex;gap:10px;font-size:0.58rem;color:var(--muted);">
+              <span style="display:flex;align-items:center;gap:3px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#444;"></span>Not done</span>
+              <span style="display:flex;align-items:center;gap:3px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#f97316;"></span>Attempted</span>
+              <span style="display:flex;align-items:center;gap:3px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3ddc84;"></span>Solved</span>
+              <span style="display:flex;align-items:center;gap:3px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;"></span>&lt;5s</span>
+            </div>
+          </div>
+          <div id="puzzleLevelDots" style="display:flex;gap:3px;padding:4px 8px 8px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;"></div>
         </div>
         <div class="player-bar" id="bottomBar">
           <div class="pbar-avatar" id="bottomAvatar">♙</div>
@@ -1081,6 +1095,37 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     return { x: (col + 0.5) * sqSize, y: (row + 0.5) * sqSize };
   }
 
+  function animateMove(from, to, callback) {
+    // Get pixel positions of squares before rendering
+    const fromEl = document.querySelector('[data-sq="'+from+'"]');
+    const toEl   = document.querySelector('[data-sq="'+to+'"]');
+    if (!fromEl || !toEl) { if(callback) callback(); return; }
+
+    const fromRect = fromEl.getBoundingClientRect();
+    const toRect   = toEl.getBoundingClientRect();
+    const pieceEl  = fromEl.querySelector('.piece-img');
+    if (!pieceEl) { if(callback) callback(); return; }
+
+    // Clone the piece and animate it
+    const clone = pieceEl.cloneNode(true);
+    clone.classList.add('sliding');
+    clone.style.width  = fromRect.width * 0.88 + 'px';
+    clone.style.height = fromRect.height * 0.88 + 'px';
+    clone.style.left   = (fromRect.left + fromRect.width * 0.06) + 'px';
+    clone.style.top    = (fromRect.top  + fromRect.height * 0.06) + 'px';
+    document.body.appendChild(clone);
+    pieceEl.style.opacity = '0'; // hide original during animation
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      clone.style.left = (toRect.left + toRect.width * 0.06) + 'px';
+      clone.style.top  = (toRect.top  + toRect.height * 0.06) + 'px';
+      setTimeout(() => {
+        clone.remove();
+        if (callback) callback();
+      }, 190);
+    }));
+  }
+
   function renderBoard() {
     const board = document.getElementById('board');
     board.innerHTML = '';
@@ -1252,8 +1297,15 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
       if (freshLegal.includes(dropSq)) {
         attemptMove(dragSq, dropSq);
       } else {
+        // Illegal square - show piece there briefly, pulse red, then slide back
         selectedSq=null; legalMoves=[];
-        renderBoard();
+        if (mode==='puzzles') {
+          // In puzzles: show pulse red + snap back animation
+          puzzleWrongAnimation();
+          renderBoard();
+        } else {
+          renderBoard();
+        }
       }
     } else {
       // Dropped on invalid square — deselect
@@ -1336,31 +1388,21 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
   }
 
   // ── MOVE EXECUTION ──
-  function attemptMove(from,to) {
+  function attemptMove(from,to,promotion) {
     const piece=chess.get(from);
     if (piece&&piece.type==='p') {
       const rank=to[1];
       if ((piece.color==='w'&&rank==='8')||(piece.color==='b'&&rank==='1')) { showPromotion(from,to,piece.color); return; }
     }
     if (mode==='puzzles') {
-      const testMv = chess.move({from, to, promotion: promotion||undefined});
-      if (!testMv) return;
-      chess.undo();
-      const ok = handlePuzzleMove(from, to, promotion);
-      if (ok) {
-        chess.move({from, to, promotion: promotion||undefined});
-        selectedSq=null; legalMoves=[];
-        lastMove={from,to};
-        moveHistory.push({san:testMv.san, fen:chess.fen(), from, to});
-        historyIdx=moveHistory.length-1;
-        renderBoard();
-      }
+      // handlePuzzleMove owns the board: applies the move itself if correct
+      handlePuzzleMove(from, to, promotion||null);
       return;
     }
     executeMove(from,to,null);
   }
 
-  function executeMove(from,to,promotion) {
+  function executeMove(from,to,promotion,animate=false) {
     // If we're viewing history, snap back to live position first
     if (historyIdx < moveHistory.length - 1 && moveHistory.length > 0) {
       chess.load(moveHistory[moveHistory.length-1].fen);
@@ -1368,13 +1410,15 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     }
     const result=chess.move(promotion?{from,to,promotion}:{from,to});
     if (!result) return;
+    const wasFrom=result.from, wasTo=result.to;
     selectedSq=null; legalMoves=[]; arrows=[]; clearArrowSvg();
-    lastMove={from:result.from,to:result.to};
-    const entry={san:result.san,fen:chess.fen(),from:result.from,to:result.to};
+    lastMove={from:wasFrom,to:wasTo};
+    const entry={san:result.san,fen:chess.fen(),from:wasFrom,to:wasTo};
     if (historyIdx<moveHistory.length-1) moveHistory=moveHistory.slice(0,historyIdx+1);
     moveHistory.push(entry); historyIdx=moveHistory.length-1;
     if (mode!=='analysis') { if(result.color==='w') whiteTime+=increment; else blackTime+=increment; }
-    renderBoard(); checkGameOver();
+    if (animate) { animateMove(wasFrom, wasTo, () => { renderBoard(); checkGameOver(); }); }
+    else { renderBoard(); checkGameOver(); }
 
     if (!chess.game_over()&&gameActive) {
       if (mode==='computer'&&chess.turn()!==(playerColor==='white'?'w':'b')) {
@@ -1479,7 +1523,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
         if (!gameActive) return;
         // Random promotion for beginner
         const promo = m.flags.includes('p') ? ['q','r','b','n'][Math.floor(Math.random()*4)] : null;
-        executeMove(m.from,m.to,promo);
+        executeMove(m.from,m.to,promo,true);
       }, delay);
       return;
     }
@@ -1492,7 +1536,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
         setTimeout(()=>{
           document.getElementById('thinkingEl').classList.remove('show');
           if (!gameActive) return;
-          executeMove(m.from,m.to,m.promotion||'q');
+          executeMove(m.from,m.to,m.promotion||'q',true);
         }, delay);
       } else {
         // Occasionally take a capture or check if available
@@ -1503,7 +1547,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
         setTimeout(()=>{
           document.getElementById('thinkingEl').classList.remove('show');
           if (!gameActive) return;
-          executeMove(m.from,m.to,m.promotion||'q');
+          executeMove(m.from,m.to,m.promotion||'q',true);
         }, delay);
       }
       return;
@@ -1523,7 +1567,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
       setTimeout(()=>{
         document.getElementById('thinkingEl').classList.remove('show');
         if (!gameActive) return;
-        executeMove(m.from,m.to,m.promotion||'q');
+        executeMove(m.from,m.to,m.promotion||'q',true);
       }, delay);
       return;
     }
@@ -1532,7 +1576,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
       setTimeout(()=>{
         document.getElementById('thinkingEl').classList.remove('show');
         if (!gameActive) return;
-        executeMove(uciMove.slice(0,2),uciMove.slice(2,4),uciMove.length===5?uciMove[4]:null);
+        executeMove(uciMove.slice(0,2),uciMove.slice(2,4),uciMove.length===5?uciMove[4]:null,true);
       }, delay);
     });
   }
@@ -1547,7 +1591,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
       const btn=document.createElement('div'); btn.className='promo-piece';
       const img=document.createElement('img'); img.src=PIECE_URLS[key]; img.style.cssText='width:100%;height:100%;';
       btn.appendChild(img);
-      btn.onclick=()=>{ modal.classList.remove('show'); executeMove(from,to,type); };
+      btn.onclick=()=>{ modal.classList.remove('show'); executeMove(from,to,type,true); };
       pieces.appendChild(btn);
     });
     modal.classList.add('show');
@@ -2227,6 +2271,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     if (mode === 'online') localStorage.removeItem('wg_online_game');
   }
   function backToLobby() {
+    hideLevelBar();
     gameActive=false; clearInterval(clockInterval);
     // Stop analysis engine
     analysisRunning=false;
@@ -2353,10 +2398,42 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
   let puzzleDifficulty = 'medium';
   let puzzleData = null, puzzleMoves = [], puzzleMoveIdx = 0, puzzleColor = 'white', puzzleSolved = false;
   let puzzleLevel = 1;
-  let puzzleFirstTry = true;        // current level (1-based)
-  let puzzleOnlineMode = true; // true = fetch Lichess, false = offline cache only
+  let puzzleFirstTry = true;
+
+  // ── PUZZLE BANK (loaded from puzzles.json) ──
+  let PUZZLE_BANK = null; // { easy: [...], medium: [...], hard: [...], grandmaster: [...] }
+  async function loadPuzzleBank() {
+    if (PUZZLE_BANK) return PUZZLE_BANK;
+    try {
+      const r = await fetch('puzzles.json');
+      PUZZLE_BANK = await r.json();
+      console.log('[puzzles] loaded bank:', Object.entries(PUZZLE_BANK).map(([k,v])=>k+':'+v.length).join(', '));
+    } catch(e) {
+      console.warn('[puzzles] failed to load puzzles.json, using fallback:', e.message);
+      PUZZLE_BANK = null;
+    }
+    return PUZZLE_BANK;
+  }
+
+  function getPuzzleForLevel(diff, level) {
+    const pool = PUZZLE_BANK?.[diff];
+    if (!pool || !pool.length) return null;
+    // Level 1-1000 maps deterministically to puzzle index
+    const idx = (level - 1) % pool.length;
+    const p = pool[idx];
+    return {
+      puzzle: { id: p.id || (diff+'_'+idx), solution: p.moves, rating: p.rating, initialPly: 0, noSetup: true },
+      game: { pgn: '', fen: p.fen }
+    };
+  }
+  function loadSavedLevel() {
+    try { const s=JSON.parse(localStorage.getItem('wg_puzzle_level')||'{}'); puzzleLevel=s[puzzleDifficulty]||1; } catch(e){puzzleLevel=1;}
+  }
+  function saveCurrentLevel() {
+    try { const s=JSON.parse(localStorage.getItem('wg_puzzle_level')||'{}'); s[puzzleDifficulty]=puzzleLevel; localStorage.setItem('wg_puzzle_level',JSON.stringify(s)); } catch(e){}
+  }
   let puzzleLevelStartTime = 0; // for speed tracking
-  const PUZZLE_LEVELS = 50;   // levels per difficulty tier
+  const PUZZLE_LEVELS = 1000;   // levels per difficulty tier
 
   function getPuzzleProgress() {
     try { return JSON.parse(localStorage.getItem('wg_puzzle_progress') || '{}'); } catch(e) { return {}; }
@@ -2461,19 +2538,7 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     return null;
   }
 
-  // Built-in fallback puzzles (always available, no internet needed)
-  const BUILTIN_PUZZLES = [
-    {id:'b1',fen:'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4',moves:['d1f3','f6e4','f3f7'],rating:900},
-    {id:'b2',fen:'rnbqkbnr/ppp2ppp/3p4/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 3',moves:['d1h5','e8e7','h5e5'],rating:850},
-    {id:'b3',fen:'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4',moves:['h5f7','e8e7','f7e6'],rating:950},
-    {id:'b4',fen:'rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3',moves:['e1e2','h4e4'],rating:800},
-    {id:'b5',fen:'r1bqkb1r/ppp2ppp/2np1n2/4p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5',moves:['f3g5','f6e4','g5e4','d6e5','e4f6'],rating:1100},
-    {id:'b6',fen:'r2qkb1r/ppp2ppp/2n1pn2/3p4/2PP4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 6',moves:['d4c5','d5d4','c3e4','f6e4','c5c6'],rating:1200},
-    {id:'b7',fen:'rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4',moves:['c4f7','e8f7','f3e5','f7e8','d1h5'],rating:1300},
-    {id:'b8',fen:'r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4',moves:['c6d4','f3e5','d4f3','g1f3'],rating:1000},
-    {id:'b9',fen:'6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1',moves:['e1e8','g8h7','e8h8'],rating:700},
-    {id:'b10',fen:'4r1k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1',moves:['e1e8','e8e8','g1f2'],rating:750},
-  ];
+
 
   async function downloadPuzzles() {
     const btn = document.getElementById('dlBtn');
@@ -2489,7 +2554,44 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     setTimeout(() => updatePuzzleUI('playing'), 2000);
   }
 
+  // Validate a puzzle data object — returns null if OK, error string if broken
+  function validatePuzzleData(data) {
+    try {
+      const testChess = new Chess();
+      const pd = data.puzzle;
+      const gd = data.game;
+      if (gd.fen) {
+        try { testChess.load(gd.fen); } catch(e) { return 'bad FEN'; }
+      } else {
+        const pgnMoves = (gd.pgn||'').replace(/\[.*?\]\s*/g,'').trim()
+          .split(/\s+/).filter(t => t && !/^\d+\./.test(t) && t!=='*');
+        for (let i=0; i<Math.min(pd.initialPly,pgnMoves.length); i++) {
+          try { testChess.move(pgnMoves[i]); } catch(e) { return 'PGN replay failed'; }
+        }
+      }
+      const moves = pd.solution;
+      if (!moves||!moves.length) return 'no solution';
+      let si = 0;
+      if (!pd.noSetup) {
+        const su = moves[0];
+        if (!testChess.move({from:su.slice(0,2),to:su.slice(2,4),promotion:su[4]||undefined}))
+          return 'setup move illegal: '+su;
+        si = 1;
+      }
+      if (testChess.game_over()) return 'game over after setup';
+      if (moves.length <= si) return 'no player moves';
+      // Validate every move in the solution chain
+      for (let i=si; i<moves.length; i++) {
+        const u=moves[i];
+        if (!testChess.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]||undefined}))
+          return 'move '+i+' illegal: '+u;
+      }
+      return null;
+    } catch(e) { return 'exception: '+e.message; }
+  }
+
   async function startPuzzle() {
+    saveCurrentLevel();
     mode = 'puzzles';
     gameActive = false;
     chess = new Chess();
@@ -2498,173 +2600,163 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     puzzleSolved = false;
     showView('gameView');
     renderBoard();
-
-    // Hide clocks — puzzles are untimed
     document.getElementById('topClock').style.visibility = 'hidden';
     document.getElementById('bottomClock').style.visibility = 'hidden';
     clearInterval(clockInterval);
 
-    // Show loading overlay on board
-    let loadingOverlay = document.getElementById('puzzleLoadingOverlay');
-    if (!loadingOverlay) {
-      loadingOverlay = document.createElement('div');
-      loadingOverlay.id = 'puzzleLoadingOverlay';
-      loadingOverlay.style.cssText = 'position:absolute;inset:0;background:rgba(8,8,8,0.82);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:30;border-radius:3px;gap:12px;';
-      loadingOverlay.innerHTML = '<div style="font-size:1.8rem">🧩</div><div style="font-family:Syne,sans-serif;font-weight:800;font-size:1rem;color:#f0f0f0;">Loading puzzle…</div>';
-      document.getElementById('boardWrap').appendChild(loadingOverlay);
+    let ol = document.getElementById('puzzleLoadingOverlay');
+    if (!ol) {
+      ol = document.createElement('div');
+      ol.id = 'puzzleLoadingOverlay';
+      ol.style.cssText = 'position:absolute;inset:0;background:rgba(8,8,8,0.82);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:30;border-radius:3px;gap:12px;';
+      ol.innerHTML = '<div style="font-size:1.8rem">🧩</div><div style="font-family:Syne,sans-serif;font-weight:800;font-size:1rem;color:#f0f0f0;">Loading puzzle…</div>';
+      document.getElementById('boardWrap').appendChild(ol);
     }
-    loadingOverlay.style.display = 'flex';
-
-    // Show difficulty picker + loading state in sidebar
+    ol.style.display = 'flex';
     updatePuzzleUI('loading');
 
     const diff = PUZZLE_DIFFICULTIES[puzzleDifficulty];
+    let data = null;
 
-    try {
-      // Fetch a batch and pick one we haven't seen
-      let data = null;
-      let attempts = 0;
-      const seen = getSeenPuzzles();
+    // Load puzzle bank if not already loaded
+    await loadPuzzleBank();
 
-      // Try cache first (works offline), then live fetch (if online mode), then built-in fallback
-      try {
-        if (puzzleOnlineMode) {
-          data = await getPuzzleFromCacheOrFetch(puzzleDifficulty);
-        } else {
-          // Offline-only: only use cache + builtins, never hit network
-          const cache = getPuzzleCache();
-          const seen = getSeenPuzzles();
-          const pool = (cache[puzzleDifficulty] || []).filter(p => !seen.includes(p.id));
-          if (pool.length > 0) {
-            const p = pool[Math.floor(Math.random() * pool.length)];
-            data = { puzzle: {id:p.id, solution:p.solution, rating:p.rating, initialPly:p.initialPly}, game:{pgn:p.pgn||'',fen:null} };
-          }
-        }
-      } catch(e) {
-        console.warn('Puzzle fetch failed:', e.message);
+    // Get puzzle for this specific level (always the same puzzle for same level)
+    data = getPuzzleForLevel(puzzleDifficulty, puzzleLevel);
+
+    if (!data) {
+      ol.style.display = 'none';
+      updatePuzzleUI('error', 'Could not load puzzle. Make sure puzzles.json is in your repo.');
+      return;
+    }
+
+    puzzleData = data.puzzle;
+    const game = data.game;
+    chess = new Chess();
+    if (game.fen) {
+      chess.load(game.fen);
+    } else {
+      const pgnMoves = (game.pgn||'').replace(/\[.*?\]\s*/g,'').trim()
+        .split(/\s+/).filter(t=>t&&!/^\d+\./.test(t)&&t!=='*');
+      for (let i=0; i<Math.min(puzzleData.initialPly,pgnMoves.length); i++) {
+        try { chess.move(pgnMoves[i]); } catch(e) { break; }
       }
-      if (!data) {
-        // Final fallback: built-in puzzles
-        const d = PUZZLE_DIFFICULTIES[puzzleDifficulty];
-        const seen = getSeenPuzzles();
-        const filtered = BUILTIN_PUZZLES.filter(p =>
-          p.rating >= d.min && p.rating < d.max && !seen.includes(p.id)
-        );
-        const pool = filtered.length ? filtered : BUILTIN_PUZZLES;
-        const bp = pool[Math.floor(Math.random() * pool.length)];
-        data = {
-          puzzle: { id: bp.id, solution: bp.moves, rating: bp.rating, initialPly: 0 },
-          game: { pgn: '', fen: bp.fen }
-        };
-        showToast('📴 Offline puzzle (no internet)');
-      }
-      // Background: top up the cache while user is playing
-      setTimeout(() => fillPuzzleCache(puzzleDifficulty), 3000);
+    }
 
-      if (!data) throw new Error('No puzzle found');
+    puzzleMoves = puzzleData.solution;
+    puzzleMoveIdx = 0;
 
-      puzzleData = data.puzzle;
-      const game = data.game;
-
-      // Parse position — support both PGN replay and direct FEN
-      chess = new Chess();
-      if (game.fen) {
-        // Built-in puzzle with direct FEN
-        chess.load(game.fen);
-      } else {
-        // Lichess-style: replay PGN up to initialPly
-        const pgnMoves = (game.pgn || '')
-          .replace(/\[.*?\]\s*/g, '').trim()
-          .split(/\s+/).filter(t => t && !/^\d+\./.test(t) && t !== '*');
-        for (let i = 0; i < Math.min(puzzleData.initialPly, pgnMoves.length); i++) {
-          try { chess.move(pgnMoves[i]); } catch(e) { break; }
-        }
-      }
-
-      puzzleMoves = puzzleData.solution;
-      puzzleMoveIdx = 0;
-
-      // Play setup move FIRST, then determine player colour from whose turn it now is
-      const setupUci = puzzleMoves[0];
-      const sf = setupUci.slice(0,2), st = setupUci.slice(2,4), sp = setupUci[4]||null;
-      const smv = chess.move({from:sf, to:st, promotion:sp||undefined});
+    if (!puzzleData.noSetup) {
+      const su = puzzleMoves[0];
+      const smv = chess.move({from:su.slice(0,2),to:su.slice(2,4),promotion:su[4]||undefined});
       if (smv) {
-        lastMove = {from:sf, to:st};
-        moveHistory.push({san:smv.san, fen:chess.fen(), from:sf, to:st});
+        lastMove = {from:su.slice(0,2),to:su.slice(2,4)};
+        moveHistory.push({san:smv.san,fen:chess.fen(),from:su.slice(0,2),to:su.slice(2,4)});
         historyIdx = 0;
+        animateMove(su.slice(0,2), su.slice(2,4), ()=>{});
       }
       puzzleMoveIdx = 1;
-
-      // After setup move, chess.turn() is now the player's colour
-      puzzleColor = chess.turn() === 'w' ? 'white' : 'black';
-      playerColor = puzzleColor;
-      boardFlipped = puzzleColor === 'black';
-
-      const ol = document.getElementById('puzzleLoadingOverlay');
-      if (ol) ol.style.display = 'none';
-      gameActive = true;
-      puzzleLevelStartTime = Date.now();
-      puzzleFirstTry = true; // track if user made any wrong moves
-      renderBoard();
-      updatePuzzleUI('playing');
-      const myIsWhite = puzzleColor === 'white';
-      setPlayerBar('bottom', 'You (' + puzzleColor + ')', '', null, myIsWhite);
-      setPlayerBar('top', 'Puzzle · ' + diff.label, '', null, !myIsWhite);
-
-    } catch(e) {
-      console.error('Puzzle fetch failed:', e);
-      const ole = document.getElementById('puzzleLoadingOverlay');
-      if (ole) ole.style.display = 'none';
-      updatePuzzleUI('error', e.message);
     }
+
+    puzzleColor = chess.turn()==='w' ? 'white' : 'black';
+    playerColor = puzzleColor;
+    boardFlipped = puzzleColor === 'black';
+
+    ol.style.display = 'none';
+    gameActive = true;
+    puzzleLevelStartTime = Date.now();
+    puzzleFirstTry = true;
+    renderBoard();
+    updatePuzzleUI('playing');
+    renderLevelBar();
+    const myIsWhite = puzzleColor === 'white';
+    setPlayerBar('bottom', 'You ('+puzzleColor+')', '', null, myIsWhite);
+    setPlayerBar('top', 'Puzzle · '+diff.label, '', null, !myIsWhite);
+  }
+
+  function renderLevelBar() {
+    const bar = document.getElementById('puzzleLevelBar');
+    const dots = document.getElementById('puzzleLevelDots');
+    const title = document.getElementById('puzzleLevelTitle');
+    if (!bar || !dots) return;
+    bar.style.display = 'block';
+    if (title) title.textContent = PUZZLE_DIFFICULTIES[puzzleDifficulty].label.toUpperCase() + ' — 1000 LEVELS';
+    dots.innerHTML = '';
+
+    const TILE_W = 36, TILE_H = 36;
+    for (let l = 1; l <= PUZZLE_LEVELS; l++) {
+      const status = getPuzzleStatus(puzzleDifficulty, l);
+      const isActive = l === puzzleLevel;
+      let bg, border, textCol, icon;
+      if (isActive) {
+        bg='#7c3aed'; border='#a78bfa'; textCol='#fff'; icon='';
+      } else if (status==='fast') {
+        bg='#1d4ed8'; border='#3b82f6'; textCol='#fff'; icon='⚡';
+      } else if (status==='pass') {
+        bg='#166534'; border='#3ddc84'; textCol='#3ddc84'; icon='✓';
+      } else if (status==='fail') {
+        bg='#7c2d12'; border='#f97316'; textCol='#f97316'; icon='';
+      } else {
+        bg='#1e1e1e'; border='#333'; textCol='#888'; icon='';
+      }
+
+      const btn = document.createElement('button');
+      btn.title = 'Level ' + l + (status ? ' — ' + {fast:'Under 5s ⚡',pass:'Solved ✓',fail:'Attempted'}[status] : '');
+      btn.style.cssText = [
+        'flex-shrink:0',
+        'width:'+TILE_W+'px',
+        'height:'+TILE_H+'px',
+        'border-radius:8px',
+        'border:1.5px solid '+border,
+        'background:'+bg,
+        'cursor:pointer',
+        'display:flex;flex-direction:column;align-items:center;justify-content:center',
+        'gap:0',
+        'transition:transform 0.1s,box-shadow 0.1s',
+        isActive ? 'box-shadow:0 0 0 2px #fff,0 0 0 4px #7c3aed;transform:scale(1.12)' : 'opacity:'+(status?'1':'0.7'),
+        'font-family:"DM Sans",sans-serif',
+      ].join(';');
+
+      // Number
+      const num = document.createElement('div');
+      num.textContent = l;
+      num.style.cssText = 'font-size:0.65rem;font-weight:800;color:'+textCol+';line-height:1';
+      btn.appendChild(num);
+      // Icon (if any)
+      if (icon) {
+        const ic = document.createElement('div');
+        ic.textContent = icon;
+        ic.style.cssText = 'font-size:0.5rem;line-height:1;margin-top:1px';
+        btn.appendChild(ic);
+      }
+
+      btn.onmouseenter = () => { if (!isActive) btn.style.transform='scale(1.08)'; btn.style.opacity='1'; };
+      btn.onmouseleave = () => { if (!isActive) { btn.style.transform=''; btn.style.opacity=status?'1':'0.7'; } };
+      btn.onclick = () => { puzzleLevel = l; saveCurrentLevel(); startPuzzle(); };
+      dots.appendChild(btn);
+    }
+    // Scroll active tile into view
+    setTimeout(() => {
+      const active = dots.children[puzzleLevel - 1];
+      if (active) active.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
+    }, 60);
+  }
+
+  function hideLevelBar() {
+    const bar = document.getElementById('puzzleLevelBar');
+    if (bar) bar.style.display = 'none';
   }
 
   function buildPuzzleHeader() {
-    const prog = getPuzzleProgress();
-    // Difficulty tabs
     const diffTabs = Object.entries(PUZZLE_DIFFICULTIES).map(([k,v]) => `
-      <button onclick="puzzleDifficulty='${k}';puzzleLevel=1;updatePuzzleUI('levels')"
-        style="flex:1;min-width:55px;padding:5px 3px;border-radius:7px;border:1px solid ${puzzleDifficulty===k ? v.color : 'var(--border)'};
+      <button onclick="puzzleDifficulty='${k}';loadSavedLevel();startPuzzle()"
+        style="flex:1;min-width:55px;padding:5px 3px;border-radius:7px;
+        border:1px solid ${puzzleDifficulty===k ? v.color : 'var(--border)'};
         background:${puzzleDifficulty===k ? v.color+'22' : 'var(--surface2)'};
         color:${puzzleDifficulty===k ? v.color : 'var(--muted)'};
         font-size:0.63rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">${v.label}</button>`).join('');
 
-    // Online/offline toggle
-    const toggleBg = puzzleOnlineMode ? '#3ddc8422' : '#444';
-    const toggleColor = puzzleOnlineMode ? '#3ddc84' : '#aaa';
-    const toggleLabel = puzzleOnlineMode ? '🌐 Online' : '📴 Offline';
-
-    // Level dots for scrollbar
-    let dots = '';
-    for (let l = 1; l <= PUZZLE_LEVELS; l++) {
-      const status = getPuzzleStatus(puzzleDifficulty, l);
-      const isActive = l === puzzleLevel;
-      let bg = '#333', border = '#444', title = 'Level ' + l + ' — Not started';
-      if (status === 'fast') { bg='#3b82f6'; border='#3b82f6'; title='Level '+l+' — Completed in under 5s! ⚡'; }
-      else if (status === 'pass') { bg='#3ddc84'; border='#3ddc84'; title='Level '+l+' — Completed ✓'; }
-      else if (status === 'fail') { bg='#f97316'; border='#f97316'; title='Level '+l+' — Completed (with hints)'; }
-      else { bg='#ef4444'; border='#ef4444'; title='Level '+l+' — Incomplete'; }
-      const activeRing = isActive ? 'box-shadow:0 0 0 2px #fff;transform:scale(1.25);' : '';
-      dots += `<button onclick="puzzleLevel=${l};startPuzzle()" title="${title}"
-        style="flex-shrink:0;width:22px;height:22px;border-radius:50%;border:1.5px solid ${border};background:${bg};
-        cursor:pointer;${activeRing}font-size:0.52rem;font-weight:800;color:#fff;
-        display:flex;align-items:center;justify-content:center;">${l}</button>`;
-    }
-
-    return `
-      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">${diffTabs}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-size:0.65rem;color:var(--muted);">Level ${puzzleLevel} / ${PUZZLE_LEVELS}</div>
-        <button onclick="puzzleOnlineMode=!puzzleOnlineMode;updatePuzzleUI('levels')"
-          style="padding:3px 8px;border-radius:6px;border:1px solid ${toggleColor};background:${toggleBg};
-          color:${toggleColor};font-size:0.65rem;font-weight:700;cursor:pointer;">${toggleLabel}</button>
-      </div>
-      <div style="overflow-x:auto;padding:6px 0 8px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
-        <div style="display:flex;gap:5px;width:max-content;padding:2px 2px 4px;">${dots}</div>
-      </div>
-      <div style="font-size:0.6rem;color:var(--muted);margin-bottom:8px;text-align:center;">
-        🔴 Incomplete &nbsp; 🟠 Done w/ hints &nbsp; 🟢 First try &nbsp; 🔵 Under 5s
-      </div>`;
+    return `<div style="display:flex;gap:4px;margin-bottom:7px;">${diffTabs}</div>`;
   }
 
   function updatePuzzleUI(state, msg) {
@@ -2691,32 +2783,38 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     } else if (state === 'solved' || state === 'revealed') {
       const seenCount = getSeenPuzzles().length;
       const wasSolved = state === 'solved';
+
       el.innerHTML = diffPicker + `
-        <div style="text-align:center;padding:8px 0;">
-          <div style="font-size:2rem;margin-bottom:6px;">${wasSolved ? '✅' : '💡'}</div>
-          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:${wasSolved ? 'var(--green)' : 'var(--muted)'};margin-bottom:4px;">${wasSolved ? 'Solved!' : 'Solution shown'}</div>
-          ${wasSolved ? `<div style="font-size:0.72rem;color:var(--muted);margin-bottom:12px;">${seenCount} puzzle${seenCount===1?'':'s'} completed</div>` : '<div style="font-size:0.72rem;color:var(--muted);margin-bottom:12px;">Better luck next time!</div>'}
+        <div style="flex:1;text-align:center;padding:8px 0;">
+          <div style="font-size:2.2rem;margin-bottom:8px;">${wasSolved ? '✅' : '💡'}</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:${wasSolved ? 'var(--green)' : 'var(--muted)'};margin-bottom:6px;">${wasSolved ? 'Solved!' : 'Solution shown'}</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:14px;">${wasSolved ? seenCount+' puzzle'+(seenCount===1?'':'s')+' completed' : 'Better luck next time!'}</div>
           <button onclick="puzzleLevel=Math.min(puzzleLevel+1,PUZZLE_LEVELS);startPuzzle()" style="background:${wasSolved ? 'var(--green)' : 'var(--surface2)'};border:${wasSolved ? 'none' : '1px solid var(--border)'};color:${wasSolved ? '#000' : 'var(--text)'};font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.85rem;padding:10px;border-radius:9px;cursor:pointer;width:100%;">Next Level →</button>
-        </div>`;
+        </div>
+        `;
     } else {
       // playing
       const remaining = puzzleMoves.length - puzzleMoveIdx;
-      const cache = getPuzzleCache();
-      const cacheCount = (cache[puzzleDifficulty]||[]).length;
-      const cacheTarget = CACHE_TARGETS[puzzleDifficulty];
-      const cacheBar = Math.round((cacheCount/cacheTarget)*100);
       el.innerHTML = diffPicker + `
-        <div style="font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">🧩 ${diff.label}</div>
-        <div style="font-size:0.82rem;color:var(--text);margin-bottom:2px;">Find the best move${remaining > 2 ? 's' : ''}.</div>
-        <div style="font-size:0.72rem;color:var(--muted);margin-bottom:10px;">Playing as ${puzzleColor}</div>
-        <div style="display:flex;gap:6px;margin-bottom:10px;">
-          <button onclick="showPuzzleSolution()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.75rem;padding:7px 8px;border-radius:8px;cursor:pointer;">💡 Solution</button>
-          <button onclick="startPuzzle()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.75rem;padding:7px 8px;border-radius:8px;cursor:pointer;">Skip →</button>
+        <div style="flex:1;">
+          <div style="font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">🧩 Level ${puzzleLevel}</div>
+          <div style="font-size:0.88rem;color:var(--text);margin-bottom:4px;font-weight:600;">Find the best move${remaining > 2 ? 's' : ''}.</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:14px;">Playing as <strong style="color:var(--text)">${puzzleColor}</strong></div>
+          <div style="display:flex;gap:6px;margin-bottom:12px;">
+            <button onclick="showPuzzleSolution()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.75rem;padding:8px;border-radius:8px;cursor:pointer;">💡 Solution</button>
+            <button onclick="startPuzzle()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.75rem;padding:8px;border-radius:8px;cursor:pointer;">Skip →</button>
+          </div>
+
         </div>
-        <div style="font-size:0.65rem;color:var(--muted);margin-bottom:3px;">Offline cache: ${cacheCount}/${cacheTarget}</div>
-        <div style="height:3px;background:var(--surface2);border-radius:2px;margin-bottom:6px;"><div style="height:100%;width:${cacheBar}%;background:${cacheBar>=80?'var(--green)':cacheBar>=40?'#f5c518':'var(--red)'};border-radius:2px;transition:width 0.5s;"></div></div>
-        ${cacheCount < cacheTarget ? `<button onclick="downloadPuzzles()" id="dlBtn" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.72rem;padding:6px;border-radius:7px;cursor:pointer;">⬇ Download puzzles for offline</button>` : ''}
         `;
+      // Scroll active level into view
+      setTimeout(() => {
+        const scr = document.getElementById('levelScroll');
+        if (scr) {
+          const activeBtn = scr.querySelector('button[style*="scale(1.3)"]');
+          if (activeBtn) activeBtn.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+        }
+      }, 50);
     }
   }
 
@@ -2757,17 +2855,19 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
         lastMove = {from:f, to:t};
         moveHistory.push({san:mv.san, fen:chess.fen(), from:f, to:t});
         historyIdx = moveHistory.length - 1;
-        renderBoard();
-        const bw = document.getElementById('boardWrap');
-        bw.classList.remove('puzzle-correct-flash');
-        void bw.offsetWidth;
-        bw.classList.add('puzzle-correct-flash');
-        setTimeout(() => bw.classList.remove('puzzle-correct-flash'), 500);
+        animateMove(f, t, () => {
+          renderBoard();
+          const bw = document.getElementById('boardWrap');
+          bw.classList.remove('puzzle-correct-flash');
+          void bw.offsetWidth;
+          bw.classList.add('puzzle-correct-flash');
+          setTimeout(() => bw.classList.remove('puzzle-correct-flash'), 500);
+        });
       } else {
         console.warn('[puzzle] solution move failed:', uci, 'fen:', chess.fen());
       }
       step++;
-      setTimeout(playNext, 850);
+      setTimeout(playNext, 900);
     }
     setTimeout(playNext, 200);
   }
@@ -2778,61 +2878,72 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
     const expected = expectedUci.slice(0,4) + (expectedUci[4] || '');
 
     if (played !== expected) {
-      puzzleFirstTry = false; // used a retry
+      puzzleFirstTry = false;
       puzzleWrongAnimation();
       showToast('❌ Not the best move — try again');
       selectedSq = null; legalMoves = [];
       renderBoard();
-      return false;
+      return;
     }
 
-    // Correct move — flash green
+    // Apply player's move to the board
+    const mv = chess.move({from, to, promotion: promotion||undefined});
+    if (!mv) { showToast('❌ Illegal move'); return; }
+    selectedSq = null; legalMoves = [];
+    lastMove = {from, to};
+    moveHistory.push({san:mv.san, fen:chess.fen(), from, to});
+    historyIdx = moveHistory.length - 1;
+    puzzleMoveIdx++;
+
+    // Flash green
     const boardWrap = document.getElementById('boardWrap');
     boardWrap.classList.remove('puzzle-correct-flash');
     void boardWrap.offsetWidth;
     boardWrap.classList.add('puzzle-correct-flash');
     setTimeout(() => boardWrap.classList.remove('puzzle-correct-flash'), 500);
 
-    puzzleMoveIdx++;
+    renderBoard();
 
+    // Check if puzzle is complete
     if (puzzleMoveIdx >= puzzleMoves.length) {
-      puzzleSolved = true;
-      markPuzzleSeen(puzzleData?.id);
-      const elapsed = (Date.now() - puzzleLevelStartTime) / 1000;
-      const status = (elapsed < 5 && puzzleFirstTry) ? 'fast' : puzzleFirstTry ? 'pass' : 'fail';
-      setPuzzleStatus(puzzleDifficulty, puzzleLevel, status);
-      if (status === 'fast') showToast('⚡ Under 5 seconds! Incredible!');
-      else if (status === 'pass') showToast('✅ Puzzle solved!');
-      else showToast('✅ Solved! (Try again for a better rating)');
-      updatePuzzleUI('solved');
-      return true;
+      puzzleSolvedFinish();
+      return;
     }
 
-    // Play opponent response
+    // Play opponent response after short delay
+    gameActive = false; // block player input during opponent response
     setTimeout(() => {
       const oppUci = puzzleMoves[puzzleMoveIdx];
-      const of2 = oppUci.slice(0,2), ot = oppUci.slice(2,4), op = oppUci[4]||null;
-      const mv = chess.move({from:of2, to:ot, promotion:op||undefined});
-      if (mv) {
-        lastMove = {from:of2, to:ot};
-        moveHistory.push({san:mv.san, fen:chess.fen(), from:of2, to:ot});
-        historyIdx = moveHistory.length - 1;
-        puzzleMoveIdx++;
+      const of2=oppUci.slice(0,2), ot=oppUci.slice(2,4), op=oppUci[4]||null;
+      const omv = chess.move({from:of2, to:ot, promotion:op||undefined});
+      if (!omv) { gameActive=true; return; }
+      lastMove = {from:of2, to:ot};
+      moveHistory.push({san:omv.san, fen:chess.fen(), from:of2, to:ot});
+      historyIdx = moveHistory.length - 1;
+      puzzleMoveIdx++;
+      animateMove(of2, ot, () => {
         renderBoard();
         if (puzzleMoveIdx >= puzzleMoves.length) {
-          puzzleSolved = true;
-          markPuzzleSeen(puzzleData?.id);
-          const elapsedOpp = (Date.now() - puzzleLevelStartTime) / 1000;
-          const statusOpp = (elapsedOpp < 5 && puzzleFirstTry) ? 'fast' : puzzleFirstTry ? 'pass' : 'fail';
-          setPuzzleStatus(puzzleDifficulty, puzzleLevel, statusOpp);
-          if (statusOpp === 'fast') showToast('⚡ Under 5 seconds! Incredible!');
-          else if (statusOpp === 'pass') showToast('✅ Puzzle solved!');
-          else showToast('✅ Solved! (Try again for a better rating)');
-          updatePuzzleUI('solved');
+          puzzleSolvedFinish();
+        } else {
+          gameActive = true; // player's turn again
         }
-      }
-    }, 400);
-    return true;
+      });
+    }, 350);
+  }
+
+  function puzzleSolvedFinish() {
+    puzzleSolved = true;
+    gameActive = false;
+    markPuzzleSeen(puzzleData?.id);
+    const elapsed = (Date.now() - puzzleLevelStartTime) / 1000;
+    const status = (elapsed < 5 && puzzleFirstTry) ? 'fast' : puzzleFirstTry ? 'pass' : 'fail';
+    setPuzzleStatus(puzzleDifficulty, puzzleLevel, status);
+    if (status === 'fast') showToast('⚡ Under 5 seconds! Incredible!');
+    else if (status === 'pass') showToast('✅ Puzzle solved!');
+    else showToast('✅ Solved!');
+    updatePuzzleUI('solved');
+    renderLevelBar();
   }
 
   initAdmin();
@@ -2845,5 +2956,6 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
   });
 
   </script>
+  <script src="chat-widget.js"></script>
 </body>
 </html>
